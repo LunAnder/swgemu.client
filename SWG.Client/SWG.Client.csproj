@@ -11,6 +11,7 @@
     <AssemblyName>SWG.Client</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -20,6 +21,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>experimental</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -28,8 +32,19 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <LangVersion>experimental</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <StartupObject />
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Ionic.Zip">
+      <HintPath>..\packages\DotNetZip.1.9.3\lib\net20\Ionic.Zip.dll</HintPath>
+    </Reference>
+    <Reference Include="NLog">
+      <HintPath>..\packages\NLog.3.1.0.0\lib\net35\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -38,7 +53,114 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Network\Abstracts\DataContainerReadBase.cs" />
+    <Compile Include="Network\Abstracts\DataContainerBase.cs" />
+    <Compile Include="Network\Abstracts\DataContainerReadWriteBase.cs" />
+    <Compile Include="Network\Abstracts\DataContainerWriteBase.cs" />
+    <Compile Include="Network\Abstracts\IDataContainer.cs" />
+    <Compile Include="Network\Abstracts\IDataContainerRead.cs" />
+    <Compile Include="Network\Abstracts\IDataContainerWrite.cs" />
+    <Compile Include="Network\Abstracts\MessagePath.cs" />
+    <Compile Include="Network\Abstracts\ServiceBase.cs" />
+    <Compile Include="Network\CompressioEncryption.cs" />
+    <Compile Include="Network\Message.cs" />
+    <Compile Include="Network\MessageOp.cs" />
+    <Compile Include="Network\Messages\BaselineMessage.cs" />
+    <Compile Include="Network\Messages\DeltaMessage.cs" />
+    <Compile Include="Network\Messages\ErrorMessage.cs" />
+    <Compile Include="Network\Messages\IDeserializableFromMessage.cs" />
+    <Compile Include="Network\Messages\LinkDeadMessage.cs" />
+    <Compile Include="Network\Messages\ListChange.cs" />
+    <Compile Include="Network\Messages\ListChangeOperation.cs" />
+    <Compile Include="Network\Messages\Login\EnumerateCharacterIdMessage.cs" />
+    <Compile Include="Network\Messages\Login\LoginClientTokenMessage.cs" />
+    <Compile Include="Network\Messages\Login\LoginClusterStatusMessage.cs" />
+    <Compile Include="Network\Messages\Login\LoginEnumClusterMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Cell\CellObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Cell\UpdateCellPermissionsMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ChatServerStatusMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ClientIDMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ClientInactivityMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ClientLogoutMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ClientPermissionsMessage.cs" />
+    <Compile Include="Network\Messages\Zone\ConnectPlayerResponseMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectDeltaMessage1.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectDeltaMessage4.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectDeltaMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectMessage1.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectMessage4.cs" />
+    <Compile Include="Network\Messages\Zone\Creature\CreatureObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\GalaxyLoopTimesMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Intangible\IntangibleObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Intangible\IntangibleObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\ParametersMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectDeltaMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectDeltaMessage8.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectDeltaMessage9.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectMessage8.cs" />
+    <Compile Include="Network\Messages\Zone\Player\PlayerObjectMessage9.cs" />
+    <Compile Include="Network\Messages\Zone\SceneCreateObject.cs" />
+    <Compile Include="Network\Messages\Zone\SceneReady.cs" />
+    <Compile Include="Network\Messages\Zone\SceneStart.cs" />
+    <Compile Include="Network\Messages\Zone\SelectCharacterMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Static\StaticObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectDeltaMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectMessage7.cs" />
+    <Compile Include="Network\Messages\Zone\Tangible\UpdatePVPStatusMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Intangible\IntangibleObjectMessage3.cs" />
+    <Compile Include="Network\ObjectGrapth.cs" />
+    <Compile Include="Network\Objects\Character.cs" />
+    <Compile Include="Network\Objects\ServerDetails.cs" />
+    <Compile Include="Network\Objects\ServerName.cs" />
+    <Compile Include="Network\Objects\Zone\Creature\EquiptmentItem.cs" />
+    <Compile Include="Network\Objects\Zone\Creature\GroupMissionCriticalObject.cs" />
+    <Compile Include="Network\Objects\Zone\Creature\SkillModifier.cs" />
+    <Compile Include="Network\Objects\Zone\Player\DraftSchematic.cs" />
+    <Compile Include="Network\Objects\Zone\Player\Experience.cs" />
+    <Compile Include="Network\Objects\Zone\Player\QuestJournalItem.cs" />
+    <Compile Include="Network\Objects\Zone\Player\Waypoint.cs" />
+    <Compile Include="Network\Packet.cs" />
+    <Compile Include="Network\Session.cs" />
+    <Compile Include="Network\SessionCommand.cs" />
+    <Compile Include="Network\SessionOp.cs" />
+    <Compile Include="Network\SessionStatus.cs" />
+    <Compile Include="Network\SocketReader.cs" />
+    <Compile Include="Network\SocketWriter.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\BoolData.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\DataBase.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\DataTypes.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\FloatData.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\IntegerData.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\StringData.cs" />
+    <Compile Include="Object\Templates\Data\Primitives\TemplateBase.cs" />
+    <Compile Include="Object\Templates\Data\RangedIntCustomizationVariable.cs" />
+    <Compile Include="Object\Templates\Data\RangedIntCustomizationVariables.cs" />
+    <Compile Include="Object\Templates\Data\StringIdData.cs" />
+    <Compile Include="Object\Templates\Data\VectorData.cs" />
+    <Compile Include="Object\Templates\SharedObjectTempalte.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="System.Collections.Concurrent\ConcurrentQueue.cs" />
+    <Compile Include="System.Collections.Concurrent\IProducerConsumerCollectioncs.cs" />
+    <Compile Include="Utils\ByteArrayExtension.cs" />
+    <Compile Include="Utils\ByteOrder.cs" />
+    <Compile Include="Utils\DateTimeExt.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Swg.Explorer\Wxv.Swg.Common\Wxv.Swg.Common.csproj">
+      <Project>{86ad7dc4-bd2b-4af1-a50e-bfce80d9e562}</Project>
+      <Name>Wxv.Swg.Common</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
