@@ -14,6 +14,8 @@ namespace SWG.Client.Network.Messages
         public int DataSize { get; set; }
         public short UpdateCount { get; set; }
 
+        public DeltaMessage() { }
+
         public DeltaMessage(byte[] Data, int Size, bool parseFromData = false)
             : base(Data, Size, parseFromData)
         {

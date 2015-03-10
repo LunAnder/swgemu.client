@@ -25,7 +25,7 @@ namespace SWG.Client.Object.Templates.Data
             set
             {
                 _file = value;
-                updateFullString();
+                UpdateFullString();
             }
         }
 
@@ -35,7 +35,7 @@ namespace SWG.Client.Object.Templates.Data
             set
             {
                 _stringId = value;
-                updateFullString();
+                UpdateFullString();
             }
         }
 
@@ -48,7 +48,7 @@ namespace SWG.Client.Object.Templates.Data
 
             set
             {
-                base.Value = value;
+                //base.Value = value;
                 if (string.IsNullOrEmpty(value))
                 {
                     _file = null;
@@ -63,6 +63,8 @@ namespace SWG.Client.Object.Templates.Data
                         _stringId = split[1];
                     }
                 }
+
+                UpdateFullString();
             }
         }
 
@@ -76,17 +78,26 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
+        public StringIdData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.StringId)
+        {
+
+        }
+
         public override bool Parse(IFFFile.Node Source, ref int offset)
         {
-            byte readCase = Source.Data.ReadByte(ref offset);
-            if(readCase != 1)
-            {
-                return false;
-            }
+            return Parse(Source.Data, ref offset);
+        }
 
+        private void UpdateFullString()
+        {
+            base.Value = string.Format("@{0}:{1}", _file ?? "", _stringId ?? "");
+        }
+
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
             var file = new StringData();
             var id = new StringData();
-            if(!file.Parse(Source, offset) || !id.Parse(Source, offset))
+            if (!file.Parse(Data, ref offset) || !id.Parse(Data, ref offset))
             {
                 return false;
             }
@@ -96,12 +107,6 @@ namespace SWG.Client.Object.Templates.Data
 
             return true;
         }
-
-        private void updateFullString()
-        {
-            _fullString = string.Format("@{0}:{1}", _file ?? "", _stringId ?? "");
-        }
-
 
         public static implicit operator StringIdData(string Value)
         {
@@ -120,6 +125,11 @@ namespace SWG.Client.Object.Templates.Data
             }
 
             return Data.Value;
+        }
+
+        public override string ToString()
+        {
+            return HasValue ? Value : base.ToString();
         }
     }
 }

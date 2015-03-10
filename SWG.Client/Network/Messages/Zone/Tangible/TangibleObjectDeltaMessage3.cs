@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Tangible
 {
+    [RegisterDeltaMessage(MessageOp.TANO, 0x03)]
     public class TangibleObjectDeltaMessage3 : DeltaMessage
     {
 
@@ -18,7 +20,9 @@ namespace SWG.Client.Network.Messages.Zone.Tangible
         public int? IncapTimer { get; set; }
         public int? ConditionDamage { get; set; }
         public int? MaxCondition { get; set; }
-        public byte? Static { get; set; }    
+        public byte? Static { get; set; }
+
+        public TangibleObjectDeltaMessage3() { }
 
         public TangibleObjectDeltaMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

@@ -19,6 +19,11 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
+        public FloatData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.Float)
+        {
+
+        }
+
         public FloatData(IFFFile.Node Source, ref int Offset) : base(Source, ref Offset, DataTypes.Float)
         {
 
@@ -27,19 +32,29 @@ namespace SWG.Client.Object.Templates.Data
 
         public override bool Parse(IFFFile.Node Source, ref int offset)
         {
-            byte readCase = Source.Data.ReadByte(ref offset);
-            byte readCase2 = Source.Data.ReadByte(ref offset);
+            return Parse(Source.Data, ref offset);
+        }
 
-            if (readCase == 1 && readCase2 == 0x20)
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
+            if (offset >= Data.Length)
             {
-                Value = Source.Data.ReadFloat(ref offset);
+                return false;
+            }
+
+            byte secondaryType = Data.ReadByte(ref offset);
+
+            if (type == 1 && secondaryType == 0x20)
+            {
+                Value = Data.ReadFloat(ref offset);
 
                 return true;
             }
-            else if(readCase == 3 && readCase2 == 0x20)
+            else if (type == 3 && secondaryType == 0x20)
             {
-                Min = Source.Data.ReadFloat(ref offset);
-                Max = Source.Data.ReadFloat(ref offset);
+                Min = Data.ReadFloat(ref offset);
+                Max = Data.ReadFloat(ref offset);
+                return true;
             }
 
             return false;

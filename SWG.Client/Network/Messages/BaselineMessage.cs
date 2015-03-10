@@ -14,6 +14,11 @@ namespace SWG.Client.Network.Messages
         public int DataSize { get; set; }
         public short ObjOpcodeCount { get; set; }
 
+        public BaselineMessage()
+        {
+            
+        }
+
         public BaselineMessage(byte[] Data, int Size, bool parseFromData = false)
                 : base(Data, Size, parseFromData)
         {

@@ -1,16 +1,22 @@
 using System.Text;
-
+using SWG.Client.Utils;
 using SWG.Client.Network.Objects;
 
 
 
 namespace SWG.Client.Network.Messages.Login
 {
+    [RegisterMessage(MessageOp.EnumerateCharacterId)]
     public class EnumerateCharacterIdMessage : Message
     {
         public int CharacterCount { get; set; }
 
         public Character[] Characters { get; set; }
+
+        public EnumerateCharacterIdMessage()
+        {
+            
+        }
 
         public EnumerateCharacterIdMessage(Message ToCreateFrom, bool ParseFromData = false) 
             :base(ToCreateFrom.Data,ToCreateFrom.Size,ParseFromData)

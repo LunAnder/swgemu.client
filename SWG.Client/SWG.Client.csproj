@@ -11,7 +11,7 @@
     <AssemblyName>SWG.Client</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,9 +21,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>x64</PlatformTarget>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>experimental</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -39,11 +39,9 @@
     <StartupObject />
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Ionic.Zip">
-      <HintPath>..\packages\DotNetZip.1.9.3\lib\net20\Ionic.Zip.dll</HintPath>
-    </Reference>
-    <Reference Include="NLog">
-      <HintPath>..\packages\NLog.3.1.0.0\lib\net35\NLog.dll</HintPath>
+    <Reference Include="Ionic.Zlib, Version=1.9.1.8, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\Ionic.Zlib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -51,6 +49,9 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+    <Reference Include="UnityEngine">
+      <HintPath>D:\Unity\Editor\Data\Managed\UnityEngine.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Network\Abstracts\DataContainerReadBase.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Network\Messages\DeltaMessage.cs" />
     <Compile Include="Network\Messages\ErrorMessage.cs" />
     <Compile Include="Network\Messages\IDeserializableFromMessage.cs" />
+    <Compile Include="Network\Messages\IRegisterMessage.cs" />
     <Compile Include="Network\Messages\LinkDeadMessage.cs" />
     <Compile Include="Network\Messages\ListChange.cs" />
     <Compile Include="Network\Messages\ListChangeOperation.cs" />
@@ -107,6 +109,7 @@
     <Compile Include="Network\Messages\Zone\SceneCreateObject.cs" />
     <Compile Include="Network\Messages\Zone\SceneReady.cs" />
     <Compile Include="Network\Messages\Zone\SceneStart.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\AttributeListMessage.cs" />
     <Compile Include="Network\Messages\Zone\SelectCharacterMessage.cs" />
     <Compile Include="Network\Messages\Zone\Static\StaticObjectMessage3.cs" />
     <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectDeltaMessage3.cs" />
@@ -116,7 +119,7 @@
     <Compile Include="Network\Messages\Zone\Tangible\TangibleObjectMessage7.cs" />
     <Compile Include="Network\Messages\Zone\Tangible\UpdatePVPStatusMessage.cs" />
     <Compile Include="Network\Messages\Zone\Intangible\IntangibleObjectMessage3.cs" />
-    <Compile Include="Network\ObjectGrapth.cs" />
+    <Compile Include="Network\ObjectGraph.cs" />
     <Compile Include="Network\Objects\Character.cs" />
     <Compile Include="Network\Objects\ServerDetails.cs" />
     <Compile Include="Network\Objects\ServerName.cs" />
@@ -128,12 +131,21 @@
     <Compile Include="Network\Objects\Zone\Player\QuestJournalItem.cs" />
     <Compile Include="Network\Objects\Zone\Player\Waypoint.cs" />
     <Compile Include="Network\Packet.cs" />
+    <Compile Include="Network\AvailableServer.cs" />
     <Compile Include="Network\Session.cs" />
     <Compile Include="Network\SessionCommand.cs" />
+    <Compile Include="Network\SessionLoginCompleteEventArgs.cs" />
+    <Compile Include="Network\SessionLoginManager.cs" />
     <Compile Include="Network\SessionOp.cs" />
     <Compile Include="Network\SessionStatus.cs" />
     <Compile Include="Network\SocketReader.cs" />
     <Compile Include="Network\SocketWriter.cs" />
+    <Compile Include="Object\Scene\SceneObject.cs" />
+    <Compile Include="Object\Scene\Variables\GameObjectType.cs" />
+    <Compile Include="Object\Scene\Variables\StringId.cs" />
+    <Compile Include="Object\Templates\Data\Complex\ComplexVectorData.cs" />
+    <Compile Include="Object\Templates\Data\Complex\PaletteColorCustomizationVariable.cs" />
+    <Compile Include="Object\Templates\Data\Complex\PaletteColorCustomizationVariables.cs" />
     <Compile Include="Object\Templates\Data\Primitives\BoolData.cs" />
     <Compile Include="Object\Templates\Data\Primitives\DataBase.cs" />
     <Compile Include="Object\Templates\Data\Primitives\DataTypes.cs" />
@@ -141,27 +153,59 @@
     <Compile Include="Object\Templates\Data\Primitives\IntegerData.cs" />
     <Compile Include="Object\Templates\Data\Primitives\StringData.cs" />
     <Compile Include="Object\Templates\Data\Primitives\TemplateBase.cs" />
-    <Compile Include="Object\Templates\Data\RangedIntCustomizationVariable.cs" />
-    <Compile Include="Object\Templates\Data\RangedIntCustomizationVariables.cs" />
+    <Compile Include="Object\Templates\Data\Complex\RangedIntCustomizationVariable.cs" />
+    <Compile Include="Object\Templates\Data\Complex\RangedIntCustomizationVariables.cs" />
     <Compile Include="Object\Templates\Data\StringIdData.cs" />
     <Compile Include="Object\Templates\Data\VectorData.cs" />
-    <Compile Include="Object\Templates\SharedObjectTempalte.cs" />
+    <Compile Include="Object\Templates\IArchiveRepository.cs" />
+    <Compile Include="Object\Templates\ITemplateRepository.cs" />
+    <Compile Include="Object\Templates\Shared\Cell\SharedCellObjectTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\GenericSharedTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\Intangible\SharedIntangibleObjectTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\SharedObjectTemplate.cs" />
+    <Compile Include="Object\Templates\ArchiveRepository.cs" />
+    <Compile Include="Object\Templates\Shared\Creature\SharedCreatureObjectTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\Tangible\SharedBaseFillerBuilding.cs" />
+    <Compile Include="Object\Templates\Shared\Tangible\SharedBuildingObjectTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\Tangible\SharedTangibleObjectTemplate.cs" />
+    <Compile Include="Object\Templates\Shared\Static\StaticObjectTemplate.cs" />
+    <Compile Include="Object\Templates\TemplateRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="System.Collections.Concurrent\ConcurrentDictonary.cs" />
     <Compile Include="System.Collections.Concurrent\ConcurrentQueue.cs" />
     <Compile Include="System.Collections.Concurrent\IProducerConsumerCollectioncs.cs" />
+    <Compile Include="System.Collections.Concurrent\ObjectPool.cs" />
+    <Compile Include="System.Collections.Concurrent\SplitOrderedList.cs" />
+    <Compile Include="Utils\MessageQueueExtensions.cs" />
+    <Compile Include="Utils\RegisterBaselineMessageAttribute.cs" />
     <Compile Include="Utils\ByteArrayExtension.cs" />
     <Compile Include="Utils\ByteOrder.cs" />
     <Compile Include="Utils\DateTimeExt.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
+    <Compile Include="Utils\IFFFileExtensions.cs" />
+    <Compile Include="Utils\RegisterDeltaMessageAttribute.cs" />
+    <Compile Include="Utils\RegisterMessageAttribute.cs" />
+    <Compile Include="Utils\RegisterMessageWithSecondaryAttribute.cs" />
+    <Compile Include="Utils\RegisterMessageWIthOpcodeAttribute.cs" />
+    <Compile Include="Utils\Tuple.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Swg.Explorer\Wxv.Swg.Common\Wxv.Swg.Common.csproj">
       <Project>{86ad7dc4-bd2b-4af1-a50e-bfce80d9e562}</Project>
       <Name>Wxv.Swg.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LogAbstraction.Nlog\LogAbstraction.NLog.csproj">
+      <Project>{1734ac9b-734b-47cd-ba42-4c326db197d7}</Project>
+      <Name>LogAbstraction.NLog</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LogAbstraction\LogAbstraction.csproj">
+      <Project>{c6df3492-6be7-410a-b61a-6770e55cd11e}</Project>
+      <Name>LogAbstraction</Name>
+    </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Ionic.Zlib.dll" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

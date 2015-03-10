@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone
 {
+    [RegisterMessage(MessageOp.CmdStartScene)]
     public class SceneStart : Message
     {
         public byte IgnoreLayoutFiles { get; set; }
@@ -15,6 +17,8 @@ namespace SWG.Client.Network.Messages.Zone
         public float ZCoord { get; set; }
         public string SharedRaceTemplate { get; set; }
         public long GalaticTime { get; set; }
+
+        public SceneStart() { }
 
         public SceneStart(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

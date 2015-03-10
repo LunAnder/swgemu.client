@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Cell
 {
+    [RegisterBaselineMessage(MessageOp.SCLT, 0x03)]
     public class CellObjectMessage3 : BaselineMessage
     {
 
@@ -14,6 +16,8 @@ namespace SWG.Client.Network.Messages.Zone.Cell
         public string CustomName { get; set; }
         public int Unknown2 { get; set; }
         public int CellNumber { get; set; }
+
+        public CellObjectMessage3() { }
 
         public CellObjectMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

@@ -20,16 +20,47 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
-        public override bool Parse(IFFFile.Node Source, ref int offset)
+        public StringData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.String)
         {
-            int readCase = Source.Data.ReadByte(ref offset);
-            if(readCase == 1)
+
+        }
+
+        /*public override bool Parse(byte[] Data, ref int offset)
+        {
+            if(Data.Length >= offset)
             {
-                Value = Source.Data.ReadAsciiString(ref offset);
+                return false;
+            }
+
+            int readCase = Data.ReadByte(ref offset);
+            if (readCase == 1)
+            {
+                Value = Data.ReadAsciiString(ref offset);
                 return true;
             }
 
             return false;
+        }*/
+
+        public override bool Parse(IFFFile.Node Source, ref int offset)
+        {
+            return Parse(Source.Data, ref offset);
+        }
+
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
+            if (offset >= Data.Length)
+            {
+                return false;
+            }
+
+            if (type != 01)
+            {
+                return false;
+            }
+            
+            Value = Data.ReadAsciiString(ref offset);
+            return true;
         }
 
         public static implicit operator StringData(string Value)
@@ -48,6 +79,11 @@ namespace SWG.Client.Object.Templates.Data
             }
 
             return Data.Value;
+        }
+
+        public override string ToString()
+        {
+            return HasValue ? Value : base.ToString();
         }
     }
 }

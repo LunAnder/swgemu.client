@@ -1,2 +1,14 @@
 SWG.Client.v11.suo
 SWG.Client/obj/
+/LogAbstraction/bin/Debug
+/LogAbstraction/obj/Debug
+/LogAbstraction.Nlog/bin/Debug
+/LogAbstraction.Nlog/obj/Debug
+/NLogWrapper/obj/Debug
+/packages
+/SWG.Client/bin/Debug
+/Tester/bin/Debug
+*.suo
+/Tester/obj/Debug
+/SWG.Client.sln.ide
+*.pdb

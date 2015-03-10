@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone
 {
+    [RegisterMessage(MessageOp.SceneCreateObjectByCrc)]
     public class SceneCreateObject : Message
     {
 
@@ -18,6 +20,8 @@ namespace SWG.Client.Network.Messages.Zone
         public float ZCoorinate { get; set; }
         public int ObjectCRC { get; set; }
         public byte ByteFlag { get; set; }
+
+        public SceneCreateObject() { }
         
 
         public SceneCreateObject(byte[] Data, int Size = 0, bool parseFromData = false)

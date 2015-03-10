@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 
 using SWG.Client.Network.Objects.Zone.Creature;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterDeltaMessage(MessageOp.CREO, 0x04)]
     public class CreatureObjectDeltaMessage4 : DeltaMessage
     {
         public float? AccelerationMultiplierBase { get; set; }
@@ -25,7 +26,9 @@ namespace SWG.Client.Network.Messages.Zone.Creature
         public float? TurnRadius { get; set; }
         public float? WalkSpeed { get; set; }
         public float? WaterModPercent { get; set; }
-        public ListChange<GroupMissionCriticalObject>[] GroupMissionCriticalObjects { get; set; } 
+        public ListChange<GroupMissionCriticalObject>[] GroupMissionCriticalObjects { get; set; }
+
+        public CreatureObjectDeltaMessage4() { }
 
         public CreatureObjectDeltaMessage4(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

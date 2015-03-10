@@ -5,11 +5,12 @@ using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
 using SWG.Client.Network.Objects.Zone.Player;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
+    [RegisterDeltaMessage(MessageOp.PLAY, 0x09)]
     public class PlayerObjectDeltaMessage9 : DeltaMessage
     {
 
@@ -31,6 +32,8 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public int? MaxConsumable { get; set; }
         public ListChange<Waypoint>[] UnusedWaypoints { get; set; }
         public int? JediState { get; set; }
+
+        public PlayerObjectDeltaMessage9() { }
 
         public PlayerObjectDeltaMessage9(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

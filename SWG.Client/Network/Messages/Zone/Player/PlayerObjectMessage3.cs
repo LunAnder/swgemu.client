@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
-
+using SWG.Client.Network.Messages.Zone.Intangible;
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
-    public class PlayerObjectMessage3 : Intangible.IntangibleObjectMessage3
+    [RegisterBaselineMessage(MessageOp.PLAY, 0x03)]
+    public class PlayerObjectMessage3 : IntangibleObjectMessage3
     {
         public int[] FlagBitmasks { get; set; }
         public int[] ProfileBitmasks { get; set; }
@@ -17,6 +19,8 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public int BornDate { get; set; }
         public int TotalPlayTime { get; set; }
         public int Unknown1 { get; set; }
+
+        public PlayerObjectMessage3() { }
 
         public PlayerObjectMessage3(byte[] Data, int Size = 0, bool parseFromData = false)
             : base(Data, Size, parseFromData)

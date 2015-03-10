@@ -2,15 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterDeltaMessage(MessageOp.CREO, 0x01)]
     public class CreatureObjectDeltaMessage1 : DeltaMessage
     {
 
         public int? BankCredits { get; set; }
         public int? CashCredits { get; set; }
-        public ListChange<string>[] SkillList { get; set; } 
+        public ListChange<string>[] SkillList { get; set; }
+
+        public CreatureObjectDeltaMessage1() { }
 
         public CreatureObjectDeltaMessage1(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

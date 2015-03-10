@@ -5,11 +5,12 @@ using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
 using SWG.Client.Network.Objects.Zone.Player;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
+    [RegisterDeltaMessage(MessageOp.PLAY, 0x08)]
     public class PlayerObjectDeltaMessage8 : DeltaMessage
     {
         public ListChange<Experience>[] PlayerExperience { get; set; }
@@ -19,6 +20,8 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public byte[] CurrentFSQuestMask { get; set; }
         public byte[] CommpletedFSQuestMask { get; set; }
         public ListChange<QuestJournalItem>[] QuestJournalItems { get; set; }
+
+        public PlayerObjectDeltaMessage8() { }
 
         public PlayerObjectDeltaMessage8(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

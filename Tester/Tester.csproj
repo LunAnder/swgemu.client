@@ -11,10 +11,10 @@
     <AssemblyName>Tester</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
-    <TargetFrameworkProfile />
+    <TargetFrameworkProfile>Unity Full v3.5</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -23,7 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <Prefer32Bit>false</Prefer32Bit>
-    <LangVersion>experimental</LangVersion>
+    <LangVersion>default</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -37,12 +37,6 @@
     <LangVersion>experimental</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="NLog">
-      <HintPath>..\packages\NLog.3.1.0.0\lib\net35\NLog.dll</HintPath>
-    </Reference>
-    <Reference Include="ServiceStack.Text">
-      <HintPath>..\packages\ServiceStack.Text.3.9.71\lib\net35\ServiceStack.Text.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -55,6 +49,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Swg.Explorer\Wxv.Swg.Common\Wxv.Swg.Common.csproj">
+      <Project>{86ad7dc4-bd2b-4af1-a50e-bfce80d9e562}</Project>
+      <Name>Wxv.Swg.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\LogAbstraction\LogAbstraction.csproj">
+      <Project>{c6df3492-6be7-410a-b61a-6770e55cd11e}</Project>
+      <Name>LogAbstraction</Name>
+    </ProjectReference>
     <ProjectReference Include="..\SWG.Client\SWG.Client.csproj">
       <Project>{aba32367-7a1f-4023-b3b0-7f56df802b7b}</Project>
       <Name>SWG.Client</Name>

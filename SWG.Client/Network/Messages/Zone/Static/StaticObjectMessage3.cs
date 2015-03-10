@@ -1,9 +1,10 @@
 ﻿using System.Text;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Static
 {
+    [RegisterBaselineMessage(MessageOp.STAO, 0x03)]
     public class StaticObjectMessage3 : BaselineMessage
     {
 
@@ -12,6 +13,8 @@ namespace SWG.Client.Network.Messages.Zone.Static
         public string STFName { get; set; }
         public string CustomName { get; set; }
         public int Volume { get; set; }
+
+        public StaticObjectMessage3() { }
 
         public StaticObjectMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

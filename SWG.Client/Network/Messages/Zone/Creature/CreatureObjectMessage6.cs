@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 
 using SWG.Client.Network.Objects.Zone.Creature;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterBaselineMessage(MessageOp.CREO, 0x06)]
     public class CreatureObjectMessage6 : Tangible.TangibleObjectMessage6
     {
         public ushort DifficultyCon { get; set; }
@@ -29,6 +30,7 @@ namespace SWG.Client.Network.Messages.Zone.Creature
         public string SetObjectTemplateString { get; set; }
         public byte StationaryFlag { get; set; }
 
+        public CreatureObjectMessage6() { }
 
 
         public CreatureObjectMessage6(Message message, bool parseFromData = false)

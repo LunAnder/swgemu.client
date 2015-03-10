@@ -1,17 +1,19 @@
 using System.Text;
 
 using SWG.Client.Network.Objects;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Login
 {
+    [RegisterMessage(MessageOp.LoginClusterStatus)]
     public class LoginClusterStatusMessage : Message
     {
         public int ServerCount { get; set; }
 
         public ServerDetails[] Servers { get; set; }
 
+        public LoginClusterStatusMessage() { }
 
         public LoginClusterStatusMessage(Message ToCreateFrom, bool ParseFromData = false) 
             :base(ToCreateFrom.Data,ToCreateFrom.Size,ParseFromData)

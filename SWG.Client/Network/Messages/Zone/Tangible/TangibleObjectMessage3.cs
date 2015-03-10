@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Tangible
 {
+    [RegisterBaselineMessage(MessageOp.TANO, 0x03)]
     public class TangibleObjectMessage3 : BaselineMessage
     {
 
@@ -19,6 +21,8 @@ namespace SWG.Client.Network.Messages.Zone.Tangible
         public int ConditionDamage { get; set; }
         public int MaxCondition { get; set; }
         public byte Static { get; set; }    
+
+        public TangibleObjectMessage3() { }
 
         public TangibleObjectMessage3(byte[] Data, int Size, bool parseFromData = false)
                 : base(Data, Size, parseFromData)

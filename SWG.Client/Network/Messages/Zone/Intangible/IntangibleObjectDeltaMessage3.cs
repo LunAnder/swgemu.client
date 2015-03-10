@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Intangible
 {
+    [RegisterDeltaMessage(MessageOp.ITNO,0x03)]
     public class IntangibleObjectDeltaMessage3 : DeltaMessage
     {
 
@@ -14,6 +16,8 @@ namespace SWG.Client.Network.Messages.Zone.Intangible
         public string CustomName { get; set; }
         public int? Volume { get; set; }
         public int? GenericInt { get; set; }
+
+        public IntangibleObjectDeltaMessage3() { }
 
         public IntangibleObjectDeltaMessage3(byte[] Data, int Size, bool parseFromData = false)
             : base(Data, Size, parseFromData)

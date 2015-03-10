@@ -15,7 +15,7 @@ namespace SWG.Client.Network
 {
     public class SocketReader : ServiceBase
     {
-        private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
 
         protected CompressioEncryption _enccom = new CompressioEncryption();
         

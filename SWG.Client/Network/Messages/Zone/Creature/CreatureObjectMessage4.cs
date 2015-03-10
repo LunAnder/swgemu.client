@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 
 using SWG.Client.Network.Objects.Zone.Creature;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterBaselineMessage(MessageOp.CREO, 0x04)]
     public class CreatureObjectMessage4 : BaselineMessage
     {
         public float AccelerationMultiplierBase { get; set; }
@@ -26,7 +27,8 @@ namespace SWG.Client.Network.Messages.Zone.Creature
         public float WalkSpeed { get; set; }
         public float WaterModPercent { get; set; }
         public GroupMissionCriticalObject[] GroupMissionCriticalObjects { get; set; }
-        
+
+        public CreatureObjectMessage4() { }
 
         public CreatureObjectMessage4(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

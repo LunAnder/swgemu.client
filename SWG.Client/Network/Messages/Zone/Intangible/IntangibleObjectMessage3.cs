@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Intangible
 {
+    [RegisterBaselineMessage(MessageOp.ITNO, 0x03)]
     public class IntangibleObjectMessage3 : BaselineMessage
     {
 
@@ -14,6 +16,8 @@ namespace SWG.Client.Network.Messages.Zone.Intangible
         public string CustomName { get; set; }
         public int Volume { get; set; }
         public int GenericInt { get; set; }
+
+        public IntangibleObjectMessage3() { }
 
         public IntangibleObjectMessage3(byte[] Data, int Size = 0, bool parseFromData = false)
             : base(Data, Size, parseFromData)

@@ -4,11 +4,12 @@ using System.Linq;
 using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
+    [RegisterDeltaMessage(MessageOp.PLAY, 0x03)]
     public class PlayerObjectDeltaMessage3 : DeltaMessage
     {
         public int[] FlagBitmasks { get; set; }
@@ -17,6 +18,9 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public int? BornDate { get; set; }
         public int? TotalPlayTime { get; set; }
         public int? Unknown1 { get; set; }
+
+
+        public PlayerObjectDeltaMessage3() { }
 
         public PlayerObjectDeltaMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

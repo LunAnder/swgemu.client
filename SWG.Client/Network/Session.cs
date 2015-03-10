@@ -14,7 +14,10 @@ namespace SWG.Client.Network
     public class Session
     {
 
-        private static NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+        private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
+
+        public event EventHandler ConnectionEstablished;
+
 
         public UInt32 EncryptionKey { get; set; }
         public UInt32 WindowResendSize { get; set; }
@@ -99,6 +102,45 @@ namespace SWG.Client.Network
         public SessionCommand Command = SessionCommand.None;
 
 
+        //private SocketReader _socketReader = null;
+
+        //public SocketReader SocketReader
+        //{
+        //    get
+        //    {
+        //        return _socketReader;
+        //    }
+        //    set
+        //    {
+        //        if (value != null)
+        //        {
+        //            value.Session = this;
+        //        }
+
+        //        _socketReader = value;
+        //    }
+        //}
+
+        //private SocketWriter _socketWriter = null;
+
+        //public SocketWriter SocketWriter
+        //{
+        //    get
+        //    {
+        //        return _socketWriter;
+        //    }
+        //    set
+        //    {
+        //        if (value != null)
+        //        {
+        //            value.Session = this;
+        //        }
+
+        //        _socketWriter = value;
+        //    }
+        //}
+
+
         public Session()
         {
             MaxPacketSize = 496;
@@ -106,6 +148,8 @@ namespace SWG.Client.Network
             _windowSizeCurrent = 8000;
             WindowResendSize = 8000;
             IncomingMessageQueue = new Queue<Message>();
+
+            ConnectionEstablished += (sender, args) => { };
         }
 
 
@@ -480,7 +524,6 @@ namespace SWG.Client.Network
 
         protected void _ProcessSessionResponsePacket(Packet packet)
         {
-            Console.WriteLine(BitConverter.ToString(packet.Data,0,packet.Size));
 
             packet.ReadIndex = 2;
             var requestID = packet.ReadUInt32();
@@ -508,6 +551,8 @@ namespace SWG.Client.Network
             {
                 Command = SessionCommand.None;
             }
+
+            ConnectionEstablished(this, EventArgs.Empty);
         }
 
 

@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("SWG.Client")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Shaw Cablesystems G.P.")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("SWG.Client")]
-[assembly: AssemblyCopyright("Copyright © Shaw Cablesystems G.P. 2014")]
+[assembly: AssemblyCopyright("")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

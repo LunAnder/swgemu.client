@@ -1,5 +1,8 @@
+using SWG.Client.Utils;
+
 namespace SWG.Client.Network.Messages.Zone
 {
+    [RegisterMessage(MessageOp.ClientPermissionsMessage)]
      public class ClientPermissionsMessage :Message
     {
 
@@ -7,6 +10,7 @@ namespace SWG.Client.Network.Messages.Zone
          public byte CharacterSlotOpenFlag { get; set; }
          public byte UnlimitedCharacterCreationFlag { get; set; }
 
+         public ClientPermissionsMessage() { } 
 
          public ClientPermissionsMessage(Message message, bool parseFromData = false)
                  : base(message.Data, message.Size, parseFromData)

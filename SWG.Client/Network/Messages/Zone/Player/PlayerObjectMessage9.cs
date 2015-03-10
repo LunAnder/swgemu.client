@@ -6,11 +6,12 @@ using SWG.Client.Network;
 using SWG.Client.Network.Messages;
 using SWG.Client.Network.Objects.Zone.Creature;
 using SWG.Client.Network.Objects.Zone.Player;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
+    [RegisterBaselineMessage(MessageOp.PLAY, 0x09)]
     public class PlayerObjectMessage9 : BaselineMessage
     {
         public string[] Abilities { get; set; }
@@ -31,7 +32,8 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public int MaxConsumable { get; set; }
         public Waypoint[] UnusedWaypoints { get; set; }
         public int JediState { get; set; }
-        
+
+        public PlayerObjectMessage9() { }
 
         public PlayerObjectMessage9(byte[] Data, int Size = 0, bool parseFromData = false)
             : base(Data, Size, parseFromData)

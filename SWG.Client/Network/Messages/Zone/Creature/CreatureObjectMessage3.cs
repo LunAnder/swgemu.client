@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterBaselineMessage(MessageOp.CREO,0x03)]
     public class CreatureObjectMessage3 : Tangible.TangibleObjectMessage3
     {
 
@@ -17,6 +19,7 @@ namespace SWG.Client.Network.Messages.Zone.Creature
 
         public int[] HAMWounds { get; set; }
 
+        public CreatureObjectMessage3() { }
 
         public CreatureObjectMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)

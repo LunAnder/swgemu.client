@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Tangible
 {
+    [RegisterBaselineMessage(MessageOp.TANO, 0x07)]
     public class TangibleObjectMessage7 : BaselineMessage
     {
         public long ObjectId1 { get; set; }
         public long ObjectId2 { get; set; }
 
+        public TangibleObjectMessage7() { }
 
         public TangibleObjectMessage7(byte[] Data, int Size, bool parseFromData = false)
                 : base(Data, Size, parseFromData)

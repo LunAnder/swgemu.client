@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Creature
 {
+    [RegisterDeltaMessage(MessageOp.CREO,0x03)]                    
     public class CreatureObjectDeltaMessage3 : DeltaMessage
     {
 
@@ -16,6 +18,8 @@ namespace SWG.Client.Network.Messages.Zone.Creature
         public long? StatesBitmask { get; set; }
 
         public ListChange<int>[] HAMWounds { get; set; }
+
+        public CreatureObjectDeltaMessage3() { }
 
         public CreatureObjectDeltaMessage3(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)
@@ -52,41 +56,6 @@ namespace SWG.Client.Network.Messages.Zone.Creature
                         break;
                     case 0x11:
                         HAMWounds = ReadIntIndexedListChanges();
-                        /*HAMWounds = ReadListChanges(() =>
-                                                        {
-                                                            var operationType = ReadByte();
-                                                            var change = new ListChange<int>();
-                                                            switch (operationType)
-                                                            {
-                                                                case 0x00:
-                                                                    change.Operation = ListChangeOperation.Remove;
-                                                                    change.Index = ReadInt16();
-                                                                    break;
-                                                                case 0x01:
-                                                                    change.Operation = ListChangeOperation.Add;
-                                                                    change.Index = ReadInt16();
-                                                                    change.Value = ReadInt32();
-                                                                break;
-                                                                case 0x02:
-                                                                    change.Operation = ListChangeOperation.Change;
-                                                                    change.Index = ReadInt16();
-                                                                    change.Value = ReadInt32();
-                                                                    break;
-                                                                case 0x03:
-                                                                    change.Operation = ListChangeOperation.ResetAll;
-                                                                    var size = ReadInt16();
-                                                                    change.Values = new int[size];
-                                                                    for (int j = 0; j < size; j++)
-                                                                    {
-                                                                        change.Values[j] = ReadInt32();
-                                                                    }
-                                                                    break;
-                                                                case 0x04:
-                                                                    change.Operation = ListChangeOperation.ClearAll;
-                                                                    break;
-                                                            }
-                                                            return change;
-                                                        });*/
                         break;
                 }
             }

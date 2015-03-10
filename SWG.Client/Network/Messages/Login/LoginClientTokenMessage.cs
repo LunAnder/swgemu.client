@@ -1,10 +1,11 @@
 using System;
 using System.Text;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Login
 {
+    [RegisterMessage(MessageOp.LoginClientToken)]
     public class LoginClientTokenMessage : Message
     {
         public Int32 SessionKeySize { get; set; }
@@ -12,6 +13,10 @@ namespace SWG.Client.Network.Messages.Login
         public UInt32 UserID { get; set; }
         public string UserName { get; set; }
 
+        public LoginClientTokenMessage()
+        {
+            
+        }
 
         public LoginClientTokenMessage(Message ToCreateFrom, bool ParseFromData = false) 
             :base(ToCreateFrom.Data,ToCreateFrom.Size,ParseFromData)

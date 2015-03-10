@@ -20,16 +20,30 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
-        public override bool Parse(IFFFile.Node Source, ref int offset)
+        public BoolData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.Bool)
         {
-            byte readCase = Source.Data.ReadByte(ref offset);
-            if(readCase == 1)
+
+        }
+
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
+            if(offset >= Data.Length)
             {
-                Value = Source.Data.ReadByte(ref offset) == 1;
+                return false;
+            }
+
+            if (type == 1)
+            {
+                Value = Data.ReadByte(ref offset) == 1;
                 return true;
             }
 
             return false;
+        }
+
+        public override bool Parse(IFFFile.Node Source, ref int offset)
+        {
+            return Parse(Source.Data, ref offset);
         }
 
         public static implicit operator BoolData(bool Value)

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace SWG.Client.Network
 {
@@ -130,6 +131,23 @@ namespace SWG.Client.Network
         public override string ToString()
         {
             return string.Format("Message ({0} - {1})", MessageOpCodeEnum, Size);
+        }
+
+        public static T Create<T>(Message msg, bool parseData = true)
+            where  T: Message, new()
+        {
+            var created = new T()
+            {
+                Data = msg.Data,
+                Size = msg.Size
+            };
+            if (parseData)
+            {
+                created.ParseFromData();
+            }
+
+            return created;
+
         }
     }
 }

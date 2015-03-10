@@ -5,11 +5,12 @@ using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
 using SWG.Client.Network.Objects.Zone.Player;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player
 {
+    [RegisterBaselineMessage(MessageOp.PLAY, 0x08)]
     public class PlayerObjectMessage8 : BaselineMessage
     {
 
@@ -21,6 +22,7 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public byte[] CommpletedFSQuestMask { get; set; }
         public QuestJournalItem[] QuestJournalItems { get; set; }
 
+        public PlayerObjectMessage8() { }
 
         public PlayerObjectMessage8(byte[] Data, int Size = 0, bool parseFromData = false)
             : base(Data, Size, parseFromData)

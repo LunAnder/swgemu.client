@@ -256,6 +256,8 @@ namespace SWG.Client.Utils
                 blrd.Append(chr);
             }
 
+            ReadIndex++;
+
             return blrd.ToString();
         }
 

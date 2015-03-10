@@ -20,18 +20,34 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
+        public IntegerData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.Int)
+        {
+
+        }
+
+
         public override bool Parse(IFFFile.Node Source, ref int offset)
         {
-            byte readCase = Source.Data.ReadByte(ref offset);
-            byte readCase2 = Source.Data.ReadByte(ref offset);
+            return Parse(Source.Data, ref offset);
+        }
 
-            if (readCase == 1 && readCase2 == 0x20)
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
+            if (offset >= Data.Length)
             {
-                Value = Source.Data.ReadInt32(ref offset);
-                return true;
+                return false;
             }
 
-            return false;
+            var secondaryType = Data.ReadByte(ref offset);
+            if (type != 01 || secondaryType != 0x20)
+            {
+                return false;
+            }
+
+
+            Value = Data.ReadInt32(ref offset);
+            return true;
+            
         }
     }
 }

@@ -18,15 +18,20 @@ namespace SWG.Client.Object.Templates.Data
 
         }
 
-        public override bool Parse(IFFFile.Node Source, ref int offset)
+        public VectorData(byte[] Data, ref int Offset) : base(Data, ref Offset, DataTypes.Vector)
         {
-            int size = Source.Data.ReadInt32(ref offset);
+
+        }
+
+        public override bool Parse(byte[] Data, ref int offset)
+        {
+            int size = Data.ReadInt32(ref offset);
 
             Value = new List<T>(size);
-            for(int i = 0; i < size; i++)
+            for (int i = 0; i < size; i++)
             {
                 var newData = new T();
-                if (newData.Parse(Source, ref offset))
+                if (newData.Parse(Data, ref offset))
                 {
                     Value.Add(newData);
                 }
@@ -35,6 +40,15 @@ namespace SWG.Client.Object.Templates.Data
             return Value.Count > 0;
         }
 
+        public override bool Parse(IFFFile.Node Source, ref int offset)
+        {
+            return Parse(Source.Data, ref offset);
+        }
+
+        protected override bool InternalParseValue(byte[] Data, ref int offset, byte type)
+        {
+            return true;
+        }
 
         public static implicit operator VectorData<T>(List<T> Values)
         {

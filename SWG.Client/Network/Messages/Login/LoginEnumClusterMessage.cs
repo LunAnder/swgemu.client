@@ -1,11 +1,12 @@
 using System.Text;
 
 using SWG.Client.Network.Objects;
-
+using SWG.Client.Utils;
 
 
 namespace SWG.Client.Network.Messages.Login
 {
+    [RegisterMessage(MessageOp.LoginEnumCluster)]
     public class LoginEnumClusterMessage : Message
     {
         public int ServerCount { get; set; }
@@ -14,6 +15,10 @@ namespace SWG.Client.Network.Messages.Login
 
         public int MaxCharactersPerAccount { get; set; }
 
+        public LoginEnumClusterMessage()
+        {
+            
+        }
 
         public LoginEnumClusterMessage(Message ToCreateFrom, bool ParseFromData = false) 
             :base(ToCreateFrom.Data,ToCreateFrom.Size,ParseFromData)
