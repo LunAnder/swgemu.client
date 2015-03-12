@@ -68,9 +68,25 @@ namespace Tester
             //var addrToConnect = "swgemutest";
             //var connectToServerName = "swgemutest";
 
+            var connector = new SessionLogin();
+            connector.Server = "login.swgemu.com";
+            connector.Password = "SwgEmu_889656";
+            connector.Username = "crazyguymrkii";
+
+            connector.ConnectToLoginServer();
+            connector.LoginToServer();
+
+            var serverToConnect = connector.AvailableServers.First(cur => cur.Name == "Basilisk");
 
             var graph = new ObjectGraph();
-            graph.RegisterCreatesFromAssembly();
+            graph.ConnectTimeout = TimeSpan.FromMilliseconds(30000);
+            graph.EstablishConnection(connector.UserId, connector.SessionKey, IPAddress.Parse(serverToConnect.ServerIP),
+                serverToConnect.ServerPort);
+
+            graph.LoginCharacter(serverToConnect.Characters.First(cur => cur.Name == "CrazedZealot").CharacterID);
+
+            Console.ReadLine();
+
 
             var addrToConnect = "login.swgemu.com";
             var connectToServerName = "Basilisk";

@@ -34,8 +34,10 @@ namespace SWG.Client.Network
         }
 
 
-        public SocketReader() {}
-
+        public SocketReader()
+        {
+            
+        }
 
         public SocketReader(Session Session, Socket socket, bool Start = false)
         {

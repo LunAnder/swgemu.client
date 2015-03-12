@@ -102,44 +102,6 @@ namespace SWG.Client.Network
         public SessionCommand Command = SessionCommand.None;
 
 
-        //private SocketReader _socketReader = null;
-
-        //public SocketReader SocketReader
-        //{
-        //    get
-        //    {
-        //        return _socketReader;
-        //    }
-        //    set
-        //    {
-        //        if (value != null)
-        //        {
-        //            value.Session = this;
-        //        }
-
-        //        _socketReader = value;
-        //    }
-        //}
-
-        //private SocketWriter _socketWriter = null;
-
-        //public SocketWriter SocketWriter
-        //{
-        //    get
-        //    {
-        //        return _socketWriter;
-        //    }
-        //    set
-        //    {
-        //        if (value != null)
-        //        {
-        //            value.Session = this;
-        //        }
-
-        //        _socketWriter = value;
-        //    }
-        //}
-
 
         public Session()
         {

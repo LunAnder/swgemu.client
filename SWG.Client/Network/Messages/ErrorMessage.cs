@@ -2,15 +2,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages
 {
+    [RegisterMessage(MessageOp.ErrorMessage)]
     public class ErrorMessage : Message
     {
         public string ErrorType { get; set; }
         public string Message { get; set; }
 
         public bool Fatal { get; set; }
+
+        public ErrorMessage()
+        {
+        }
 
         public ErrorMessage(Message ToCreateFrom, bool ParseFromData = false) 
             :base(ToCreateFrom.Data,ToCreateFrom.Size,ParseFromData)

@@ -135,7 +135,7 @@
     <Compile Include="Network\Session.cs" />
     <Compile Include="Network\SessionCommand.cs" />
     <Compile Include="Network\SessionLoginCompleteEventArgs.cs" />
-    <Compile Include="Network\SessionLoginManager.cs" />
+    <Compile Include="Network\SessionLogin.cs" />
     <Compile Include="Network\SessionOp.cs" />
     <Compile Include="Network\SessionStatus.cs" />
     <Compile Include="Network\SocketReader.cs" />

@@ -3,12 +3,16 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Configuration;
+using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
-
+using System.Threading;
 using SWG.Client.Network.Abstracts;
 using SWG.Client.Network.Messages;
+using SWG.Client.Network.Messages.Login;
+using SWG.Client.Network.Messages.Zone;
 using SWG.Client.Network.Messages.Zone.Cell;
 using SWG.Client.Network.Messages.Zone.Creature;
 using SWG.Client.Network.Messages.Zone.Intangible;
@@ -39,9 +43,25 @@ namespace SWG.Client.Network
 
         public Session Session { get; set; }
 
+        public TimeSpan ConnectTimeout { get; set; }
+
+        public bool? SelectedGalaxyOpen { get; private set; }
+
+        public bool? CanCreateCharacterOnGalaxy { get; private set; }
+
+        public ulong? LoggedInCharacterId { get; private set; }
+
+
+        public IPAddress ConnectedAddress { get; private set; }
+        public int? ConnectedPort { get; private set; }
+
+        protected SocketReader _SocketReader;
+        protected SocketWriter _SocketWriter;
+        protected Socket _Socket;
+
 
         public ObjectGraph() 
-            : this(false)
+            : this(true)
         {
             
         }
@@ -52,45 +72,19 @@ namespace SWG.Client.Network
             {
                 RegisterCreatesFromAssembly();
             }
+
         }
 
         protected override void DoWork()
         {
+            if (Session == null)
+            {
+                return;
+            }
+
             while (Session.IncomingMessageQueue.Count > 0)
             {
                 var msg = Session.IncomingMessageQueue.Dequeue();
-                //switch (msg.MessageOpCodeEnum)
-                //{
-                //    case MessageOp.BaselinesMessage:
-                //        var baseineParsed = ParseBaselineMessage(msg);
-                //        if (baseineParsed != null)
-                //        {
-                //            //messages.Add(baseineParsed.ObjectId, baseineParsed);
-                //            messages.Add(baseineParsed);
-                //            _logger.Trace("{0}{1} BaselineMessage", (MessageOp)baseineParsed.ObjectType, baseineParsed.TypeNumber);
-                //        }
-                //        break;
-                //    case MessageOp.DeltasMessage:
-                //        var deltaParsed = ParseDeltaMessage(msg);
-                //        if (deltaParsed != null)
-                //        {
-                //            //messages.Add(deltaParsed.ObjectId, deltaParsed);
-                //            messages.Add(deltaParsed);
-                //            _logger.Trace("{0}{1} DeltaMessage", (MessageOp)deltaParsed.ObjectType, deltaParsed.TypeNumber);
-                //        }
-                //        break;
-                //    case MessageOp.ErrorMessage:
-                //        var errMsg = new ErrorMessage(msg, true);
-
-                //        _logger.Error("Recieved error : {0} (Fatal: {1})", errMsg.Message, errMsg.Fatal);
-                //        break;
-                //    case MessageOp.Null:
-                //        _logger.Error("Got null opcode");
-                //        break;
-                //    default:
-                //        _logger.Warn("Got unknown message : {0}", msg);
-                //        break;
-                //}
 
                 Func<Message, Message> createFunc = null;
                 Message transformed = null;
@@ -106,7 +100,86 @@ namespace SWG.Client.Network
 
             }
 
-            System.Threading.Thread.Sleep(300);
+            Thread.Sleep(300);
+        }
+
+
+        public void EstablishConnection(uint userId, byte[] sessionKey, IPAddress address, int port)
+        {
+
+            ConnectedAddress = address;
+            ConnectedPort = port;
+            Session = new Session();
+            _Socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+            _SocketReader = new SocketReader(Session, _Socket);
+            _SocketWriter = new SocketWriter(Session,  _Socket);
+            Session.Command = SessionCommand.Connect;
+
+            _logger.Debug("Connecting to zone server at {0}:{1}", address, port);
+
+            _Socket.Connect(address, port);
+            _SocketReader.Start();
+            _SocketWriter.Start();
+
+            var timeout = DateTime.Now.Add(ConnectTimeout);
+
+            while (Session.Status != SessionStatus.Connected && Session.Status != SessionStatus.Error)
+            {
+                if (timeout <= DateTime.Now)
+                {
+                    throw new TimeoutException("Timeout waiting for server conenction");
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(ConnectTimeout.TotalMilliseconds / 10));
+            }
+            
+            var clientIDMsg = new ClientIDMessage(userId, sessionKey);
+            clientIDMsg.AddFieldsToData();
+
+            Session.SendChannelA(clientIDMsg);
+
+
+            var messages =
+                Session.IncomingMessageQueue.WaitForMessages(Convert.ToInt32(ConnectTimeout.TotalMilliseconds),
+                    typeof (ErrorMessage), typeof (ClientPermissionsMessage));
+
+            var errorMsg = messages.FirstOrDefault() as ErrorMessage;
+            if (errorMsg != null)
+            {
+                throw new Exception(string.Format("[{0}] {1}", errorMsg.ErrorType, errorMsg.Message));
+            }
+
+            var permissionMessage = messages.FirstOrDefault() as ClientPermissionsMessage;
+
+            SelectedGalaxyOpen = permissionMessage.GalaxyOpenFlag == 1;
+            CanCreateCharacterOnGalaxy = permissionMessage.CharacterSlotOpenFlag == 1;
+        }
+
+        public void LoginCharacter(long chaaracterId)
+        {
+            SelectCharacterMessage selectCharacter = new SelectCharacterMessage
+            {
+                CharacterID = chaaracterId,
+            };
+
+            selectCharacter.AddFieldsToData();
+
+            Start();          
+
+            var timeout = DateTime.Now.Add(ConnectTimeout);
+
+            while (ServiceStatus != ServiceState.Running)
+            {
+                if (timeout <= DateTime.Now)
+                {
+                    throw new TimeoutException("Timeout waiting for server conenction");
+                }
+
+                Thread.Sleep(TimeSpan.FromMilliseconds(ConnectTimeout.TotalMilliseconds / 10));
+            }
+
+            Session.SendChannelA(selectCharacter);
+
         }
 
         #region Parse Baseline
@@ -335,6 +408,7 @@ namespace SWG.Client.Network
 
         #endregion
 
+        #region Register Messages Region
         public bool RegisterMessageObject(MessageOp opcode, Func<Message, Message> createFunc)
         {
             return RegisterMessageObject((uint)opcode, createFunc);
@@ -473,6 +547,7 @@ namespace SWG.Client.Network
             return null;
         }
 
+        #endregion
 
     }
 }
