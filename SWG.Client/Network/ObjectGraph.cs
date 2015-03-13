@@ -127,6 +127,7 @@ namespace SWG.Client.Network
             {
                 if (timeout <= DateTime.Now)
                 {
+                    _logger.Error("Timeout waiting for connecting to establish");
                     throw new TimeoutException("Timeout waiting for server conenction");
                 }
 
@@ -141,15 +142,29 @@ namespace SWG.Client.Network
 
             var messages =
                 Session.IncomingMessageQueue.WaitForMessages(Convert.ToInt32(ConnectTimeout.TotalMilliseconds),
-                    typeof (ErrorMessage), typeof (ClientPermissionsMessage));
+                    MessageOp.ErrorMessage, MessageOp.ClientPermissionsMessage);
 
-            var errorMsg = messages.FirstOrDefault() as ErrorMessage;
+            if (messages == null)
+            {
+                _logger.Error("Timeout waiting for ClientPermissionsMessage");
+                throw new TimeoutException("Timeout waiting for server connection");
+            }
+
+            var errorMsg =
+                Message.Create<ErrorMessage>(
+                    messages.FirstOrDefault(cur => cur.MessageOpCodeEnum == MessageOp.ErrorMessage));
             if (errorMsg != null)
             {
+                _logger.Error("Error getting client permission: [{0}] {1}", errorMsg.ErrorType, errorMsg.Message);
                 throw new Exception(string.Format("[{0}] {1}", errorMsg.ErrorType, errorMsg.Message));
             }
 
-            var permissionMessage = messages.FirstOrDefault() as ClientPermissionsMessage;
+            var permissionMessage = Message.Create<ClientPermissionsMessage>(messages.FirstOrDefault(cur => cur.MessageOpCodeEnum == MessageOp.ClientPermissionsMessage));
+            if (permissionMessage == null)
+            {
+                _logger.Error("Unknow packet when expecting ClientPermissionsMessage");
+                throw new Exception("Unknown error connecting to server");
+            }
 
             SelectedGalaxyOpen = permissionMessage.GalaxyOpenFlag == 1;
             CanCreateCharacterOnGalaxy = permissionMessage.CharacterSlotOpenFlag == 1;

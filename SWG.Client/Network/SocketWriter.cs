@@ -43,6 +43,21 @@ namespace SWG.Client.Network
             }
         }
 
+        public override void Start()
+        {
+            if (Socket == null)
+            {
+                throw new ArgumentException("Socket");
+            }
+
+            if (Session == null)
+            {
+                throw new ArgumentException("Session");
+            }
+
+            base.Start();
+        }
+
 
         protected override void DoWork()
         {

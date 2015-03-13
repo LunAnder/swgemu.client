@@ -136,7 +136,12 @@ namespace SWG.Client.Network
         public static T Create<T>(Message msg, bool parseData = true)
             where  T: Message, new()
         {
-            var created = new T()
+            if (msg == null)
+            {
+                return null;
+            }
+
+            var created = new T
             {
                 Data = msg.Data,
                 Size = msg.Size

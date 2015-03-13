@@ -49,6 +49,7 @@ namespace SWG.Client.Network
         public SessionLogin()
         {
             LoginComplete += delegate { };
+            Timeout = 30000;
         }
 
         public void ConnectToLoginServer(string server = null)
@@ -58,7 +59,7 @@ namespace SWG.Client.Network
                 Server = server;
             }
 
-            if (string.IsNullOrEmpty(server))
+            if (string.IsNullOrEmpty(Server))
             {
                 throw new ArgumentException("Server");
             }
@@ -94,6 +95,7 @@ namespace SWG.Client.Network
             _socketReader.Start();
             _socketWriter.Start();
 
+            
             var timeout = DateTime.Now.AddMilliseconds(Timeout);
 
             while (Session.Status != SessionStatus.Connected && Session.Status != SessionStatus.Error)
@@ -140,12 +142,9 @@ namespace SWG.Client.Network
             _logger.Trace("sending login id packet");
 
             Session.SendChannelA(loginIDMessage);
-
-
-
-            var messages = Session.IncomingMessageQueue.WaitForMessages(Timeout, typeof(ErrorMessage),
-                typeof (LoginClientTokenMessage), typeof (LoginClusterStatusMessage), typeof (LoginEnumClusterMessage),
-                typeof (LoginEnumClusterMessage));
+            
+            var messages = Session.IncomingMessageQueue.WaitForMessages(Timeout, MessageOp.ErrorMessage, MessageOp.LoginClientToken,
+                MessageOp.LoginClusterStatus, MessageOp.LoginEnumCluster, MessageOp.EnumerateCharacterId);
 
             if (messages == null)
             {
@@ -161,37 +160,26 @@ namespace SWG.Client.Network
 
             foreach (var message in messages)
             {
-                var errorMessage = message as ErrorMessage;
-                if (errorMessage != null)
+
+                switch (message.MessageOpCodeEnum)
                 {
-                    error = errorMessage;
-                    break;
+                    case MessageOp.ErrorMessage:
+                        error = Message.Create<ErrorMessage>(message);
+                        break;
+                    case  MessageOp.LoginClientToken:
+                        clientTokenMsg = Message.Create<LoginClientTokenMessage>(message);
+                        break;
+                    case MessageOp.LoginClusterStatus:
+                        clusterStatus = Message.Create<LoginClusterStatusMessage>(message);
+                        break;
+                    case MessageOp.LoginEnumCluster:
+                        enumCluster = Message.Create<LoginEnumClusterMessage>(message);
+                        break;
+                    case MessageOp.EnumerateCharacterId:
+                        enumCharacters = Message.Create<EnumerateCharacterIdMessage>(message);
+                        break;
                 }
 
-                var msg = message as LoginClientTokenMessage;
-                if (msg != null)
-                {
-                    clientTokenMsg = msg;
-                }
-
-                var status = message as LoginClusterStatusMessage;
-                if (status != null)
-                {
-                    clusterStatus = status;
-                }
-
-
-                var cluster = message as LoginEnumClusterMessage;
-                if (cluster != null)
-                {
-                    enumCluster = cluster;
-                }
-
-                var characters = message as EnumerateCharacterIdMessage;
-                if (characters != null)
-                {
-                    enumCharacters = characters;
-                }
             }
 
             if (error != null)

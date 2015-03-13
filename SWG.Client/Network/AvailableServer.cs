@@ -36,7 +36,7 @@ namespace SWG.Client.Network
             Name = name.ServerDisplayName;
             Timezone = name.Timezone;
 
-            Characters = Characters.ToList();
+            Characters = characters != null ? characters.ToList() : null;
         }
  
     }

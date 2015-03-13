@@ -42,7 +42,7 @@ namespace SWG.Client.Network
         public SocketReader(Session Session, Socket socket, bool Start = false)
         {
             this.Session = Session;
-            this.Socket = socket;
+            Socket = socket;
 
             ServiceThreadName = "SocketReader Thread";
 
@@ -53,6 +53,20 @@ namespace SWG.Client.Network
             
         }
 
+        public override void Start()
+        {
+            if (Socket == null)
+            {
+                throw new ArgumentException("Socket");
+            }
+
+            if (Session == null)
+            {
+                throw new ArgumentException("Session");
+            }
+
+            base.Start();
+        }
 
         protected override void DoWork()
         {
@@ -64,7 +78,7 @@ namespace SWG.Client.Network
             recievedPacket = new Packet(496);
             recievedCount = Socket.Receive(recievedPacket.Data, 0, MaxMessageSize, SocketFlags.None, out error);
 
-            _logger.Debug("Packet Recieved: {0}",
+            _logger.Trace("Packet Recieved: {0}",
                               BitConverter.ToString(recievedPacket.Data, 0, recievedCount));
 
             if (error != SocketError.Success)

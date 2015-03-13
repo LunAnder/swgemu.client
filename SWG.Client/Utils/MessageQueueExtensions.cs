@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Configuration;
 using System.Text;
 using System.Threading;
 using SWG.Client.Network;
@@ -93,5 +94,85 @@ namespace SWG.Client.Utils
             return messages;
         }
 
+        public static List<Message> WaitForMessages(this Queue<Message> queue, int timeout, MessageOp errorType, params MessageOp[] types)
+        {
+            List<Message> messages = new List<Message>();
+
+            var neededTypes = types.ToList();
+            bool error = false;
+
+            var timeoutTime = DateTime.Now.AddMilliseconds(timeout);
+
+            while (neededTypes.Count > 0 && !error)
+            {
+                if (timeoutTime <= DateTime.Now)
+                {
+                    return null;
+                }
+
+                while (queue.Count > 0)
+                {
+                    var msg = queue.Dequeue();
+                    messages.Add(msg);
+                    if (msg.MessageOpCodeEnum == errorType)
+                    {
+                        error = true;
+                        break;
+                    }
+
+                    var idx = neededTypes.IndexOf(msg.MessageOpCodeEnum);
+                    if (idx >= 0)
+                    {
+                        neededTypes.RemoveAt(idx);
+                    }
+                    timeoutTime = DateTime.Now.AddMilliseconds(timeout);
+                }
+
+                Thread.Sleep(timeout / 10);
+            }
+
+            return messages;
+        }
+
+
+        public static List<Message> WaitForMessages(this Queue<Message> queue, int timeout, uint errorType, params uint[] types)
+        {
+            List<Message> messages = new List<Message>();
+
+            var neededTypes = types.ToList();
+            bool error = false;
+
+            var timeoutTime = DateTime.Now.AddMilliseconds(timeout);
+
+            while (neededTypes.Count > 0 && !error)
+            {
+                if (timeoutTime <= DateTime.Now)
+                {
+                    return null;
+                }
+
+                while (queue.Count > 0)
+                {
+                    var msg = queue.Dequeue();
+                    messages.Add(msg);
+                    if (msg.MessageOpCode == errorType)
+                    {
+                        error = true;
+                        break;
+                    }
+
+                    var idx = neededTypes.IndexOf(msg.MessageOpCode);
+                    if (idx >= 0)
+                    {
+                        neededTypes.RemoveAt(idx);
+                    }
+                    timeoutTime = DateTime.Now.AddMilliseconds(timeout);
+                }
+
+                Thread.Sleep(timeout / 10);
+            }
+
+            return messages;
+        }
     }
 }
