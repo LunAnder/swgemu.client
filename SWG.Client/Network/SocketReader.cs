@@ -26,6 +26,8 @@ namespace SWG.Client.Network
         public Socket Socket { get; set; }
 
         public Session Session { get; set; }
+
+        public TimeSpan WaitTime { get; set; }
         
         public int MaxMessageSize
         {
@@ -36,10 +38,11 @@ namespace SWG.Client.Network
 
         public SocketReader()
         {
-            
+            WaitTime = TimeSpan.FromTicks(800);
         }
 
-        public SocketReader(Session Session, Socket socket, bool Start = false)
+        public SocketReader(Session Session, Socket socket, bool Start = false) 
+            : this()
         {
             this.Session = Session;
             Socket = socket;
@@ -53,7 +56,7 @@ namespace SWG.Client.Network
             
         }
 
-        public override void Start()
+        public override EventWaitHandle Start()
         {
             if (Socket == null)
             {
@@ -65,7 +68,7 @@ namespace SWG.Client.Network
                 throw new ArgumentException("Session");
             }
 
-            base.Start();
+            return base.Start();
         }
 
         protected override void DoWork()
@@ -78,8 +81,6 @@ namespace SWG.Client.Network
             recievedPacket = new Packet(496);
             recievedCount = Socket.Receive(recievedPacket.Data, 0, MaxMessageSize, SocketFlags.None, out error);
 
-            _logger.Trace("Packet Recieved: {0}",
-                              BitConverter.ToString(recievedPacket.Data, 0, recievedCount));
 
             if (error != SocketError.Success)
             {
@@ -151,8 +152,13 @@ namespace SWG.Client.Network
             {
                 _HandleFastpathPacket(recievedPacket, recievedCount);
             }
+            else
+            {
+                _logger.Warn("Invalid packet type: {0:X}. Type Enum: {1}", packetType, packetTypeEnum);
+            }
 
-            Thread.Sleep(TimeSpan.FromMilliseconds(0.01));
+
+            Thread.Sleep(WaitTime);
         }
 
 
@@ -165,6 +171,7 @@ namespace SWG.Client.Network
 
             if (crcLow != (byte)crc || crcHigh != (byte)(crc >> 8))
             {
+                _logger.Warn("crc mismatch for fastpath packet. packet dropped.");
                 return;
             }
 
@@ -206,14 +213,13 @@ namespace SWG.Client.Network
 
             if (crcLow != packetCrcLow || crcHigh != packetCrcHigh)
             {
-                _logger.Warn("Compressed Encrypted Packet dropped due to CRC Mismatch");
-
                 if (recievedPacket.PacetTypeEnum == SessionOp.NetStatResponse)
                 {
                     _logger.Debug("Malformed Netstat, ignorning the crc");
                 }
                 else
                 {
+                    _logger.Warn("Compressed Encrypted Packet dropped due to CRC Mismatch");
                     return;
                 }
                 
@@ -249,7 +255,7 @@ namespace SWG.Client.Network
 
             if (crcLow != (byte)crc || crcHigh != (byte)(crc >> 8))
             {
-                _logger.Debug("Dropped encrypted packet due to CRC mismatch");
+                _logger.Warn("Dropped encrypted packet due to CRC mismatch");
                 return;
             }
 

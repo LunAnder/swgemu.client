@@ -53,6 +53,10 @@
       <Project>{86ad7dc4-bd2b-4af1-a50e-bfce80d9e562}</Project>
       <Name>Wxv.Swg.Common</Name>
     </ProjectReference>
+    <ProjectReference Include="..\LogAbstraction.Nlog\LogAbstraction.NLog.csproj">
+      <Project>{1734AC9B-734B-47CD-BA42-4C326DB197D7}</Project>
+      <Name>LogAbstraction.NLog</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LogAbstraction\LogAbstraction.csproj">
       <Project>{c6df3492-6be7-410a-b61a-6770e55cd11e}</Project>
       <Name>LogAbstraction</Name>

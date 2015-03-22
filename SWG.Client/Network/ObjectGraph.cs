@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading;
 using SWG.Client.Network.Abstracts;
 using SWG.Client.Network.Messages;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Network.Messages.Login;
 using SWG.Client.Network.Messages.Zone;
 using SWG.Client.Network.Messages.Zone.Cell;
@@ -19,15 +20,16 @@ using SWG.Client.Network.Messages.Zone.Intangible;
 using SWG.Client.Network.Messages.Zone.Player;
 using SWG.Client.Network.Messages.Zone.Static;
 using SWG.Client.Network.Messages.Zone.Tangible;
+using SWG.Client.Object.Templates;
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 
 namespace SWG.Client.Network
 {
-    public class ObjectGraph : ServiceBase
+    public class ObjectGraph : ServiceBase, IHasFallbackMessageFactory, IHasMessageFactories
     {
-        public readonly ConcurrentDictionary<uint, Func<Message, Message>> RegisteredObjects =
-            new ConcurrentDictionary<uint, Func<Message, Message>>();
+
 
         public readonly ConcurrentDictionary<uint, Func<Message, Message>> RegisteredBaselines =
             new ConcurrentDictionary<uint, Func<Message, Message>>();
@@ -35,11 +37,16 @@ namespace SWG.Client.Network
         public readonly ConcurrentDictionary<uint, Func<Message, Message>> RegisteredDeltas =
             new ConcurrentDictionary<uint, Func<Message, Message>>();
 
+        public ConcurrentDictionary<uint, IMessageParseFactory> MessageFactories { get; set; }
+
+        public IMessageParseFactory FallbackFactory { get; set; }
+
+
         //private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
         private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
-
+        private static readonly LogAbstraction.ILogger _creatObjlogger = LogAbstraction.LogManagerFacad.GetLogger("ObjectCreateLogger");
         //private  Dictionary<long,Message> messages = new Dictionary<long, Message>();
-        public List<Message> messages = new List<Message>(); 
+        public List<Message> Messages = new List<Message>(); 
 
         public Session Session { get; set; }
 
@@ -59,19 +66,26 @@ namespace SWG.Client.Network
         protected SocketWriter _SocketWriter;
         protected Socket _Socket;
 
+        protected ITemplateRepository _TemplateRepository = null;
 
-        public ObjectGraph() 
-            : this(true)
+        protected Dictionary<uint, string> _crcMap = null; 
+
+
+        public ObjectGraph()
         {
+            MessageFactories = new ConcurrentDictionary<uint, IMessageParseFactory>();
+
             
-        }
-
-        public ObjectGraph(bool registerCreateFromAssemblies)
-        {
-            if (registerCreateFromAssemblies)
+            var archiveRepo = new ArchiveRepository(@"D:\SWGTrees");
+            archiveRepo.LoadArchives();
+            _TemplateRepository = new TemplateRepository
             {
-                RegisterCreatesFromAssembly();
-            }
+                ArchiveRepo = archiveRepo,
+            };
+
+            
+
+            _crcMap = _TemplateRepository.LoadCrCMap("misc/object_template_crc_string_table.iff").CRCMap;
 
         }
 
@@ -84,19 +98,52 @@ namespace SWG.Client.Network
 
             while (Session.IncomingMessageQueue.Count > 0)
             {
-                var msg = Session.IncomingMessageQueue.Dequeue();
+                Message msg;
 
-                Func<Message, Message> createFunc = null;
-                Message transformed = null;
-                if (RegisteredObjects.TryGetValue(msg.MessageOpCode, out createFunc) &&
-                    (transformed = createFunc(msg)) != null)
+                if (!Session.IncomingMessageQueue.TryDequeue(out msg))
                 {
-                    messages.Add(createFunc(msg));
+                    continue;
                 }
-                else
+
+                Message transformed;
+                IMessageParseFactory factory;
+                if (!MessageFactories.TryGetValue(msg.MessageOpCode, out factory) || factory.TryParse(msg.MessageOpCode, msg, out transformed) )
                 {
-                    _logger.Warn("Unable to find registered message factory for {0}", msg.MessageOpCodeEnum);
+                    if (!FallbackFactory.TryParse(msg.MessageOpCode, msg, out transformed))
+                    {
+                        continue;
+                    }    
                 }
+                
+                Messages.Add(transformed);
+
+
+                //Func<Message, Message> createFunc = null;
+                //Message transformed = null;
+                //if (RegisteredObjects.TryGetValue(msg.MessageOpCode, out createFunc) &&
+                //    (transformed = createFunc(msg)) != null)
+                //{
+                //    Messages.Add(transformed);
+
+                SceneCreateObject obj = transformed as SceneCreateObject;
+                if (obj != null)
+                {
+                    string objToCreate = null;
+                    if (_crcMap.TryGetValue((uint)obj.ObjectCRC, out objToCreate))
+                    {
+                        _creatObjlogger.Debug("create obj {0}", objToCreate);
+                    }
+                }
+
+                if (msg.MessageOpCodeEnum == MessageOp.CmdStartScene)
+                {
+                    _logger.Info("Got scene start! Trn: {0}", ((SceneStart)transformed).TerrainMap);
+                }
+                //}
+                //else
+                //{
+                //    _logger.Warn("Unable to find registered message factory for {0}({1:X})", msg.MessageOpCodeEnum, msg.MessageOpCode);
+                //}
 
             }
 
@@ -118,8 +165,8 @@ namespace SWG.Client.Network
             _logger.Debug("Connecting to zone server at {0}:{1}", address, port);
 
             _Socket.Connect(address, port);
-            _SocketReader.Start();
-            _SocketWriter.Start();
+            _SocketReader.Start().WaitOne(ConnectTimeout);
+            _SocketWriter.Start().WaitOne(ConnectTimeout);
 
             var timeout = DateTime.Now.Add(ConnectTimeout);
 
@@ -133,7 +180,14 @@ namespace SWG.Client.Network
 
                 Thread.Sleep(TimeSpan.FromMilliseconds(ConnectTimeout.TotalMilliseconds / 10));
             }
-            
+
+            if (!Start().WaitOne(ConnectTimeout))
+            {
+                _logger.Error("ObjectGraph service failed to start in time");
+                throw new TimeoutException("Timeout waiting for server conenction");
+            }
+
+
             var clientIDMsg = new ClientIDMessage(userId, sessionKey);
             clientIDMsg.AddFieldsToData();
 
@@ -141,7 +195,7 @@ namespace SWG.Client.Network
 
 
             var messages =
-                Session.IncomingMessageQueue.WaitForMessages(Convert.ToInt32(ConnectTimeout.TotalMilliseconds),
+                Messages.WaitForMessages(Convert.ToInt32(ConnectTimeout.TotalMilliseconds),
                     MessageOp.ErrorMessage, MessageOp.ClientPermissionsMessage);
 
             if (messages == null)
@@ -159,7 +213,9 @@ namespace SWG.Client.Network
                 throw new Exception(string.Format("[{0}] {1}", errorMsg.ErrorType, errorMsg.Message));
             }
 
-            var permissionMessage = Message.Create<ClientPermissionsMessage>(messages.FirstOrDefault(cur => cur.MessageOpCodeEnum == MessageOp.ClientPermissionsMessage));
+            var permissionMessage =
+                Message.Create<ClientPermissionsMessage>(
+                    messages.FirstOrDefault(cur => cur.MessageOpCodeEnum == MessageOp.ClientPermissionsMessage));
             if (permissionMessage == null)
             {
                 _logger.Error("Unknow packet when expecting ClientPermissionsMessage");
@@ -178,391 +234,9 @@ namespace SWG.Client.Network
             };
 
             selectCharacter.AddFieldsToData();
-
-            Start();          
-
-            var timeout = DateTime.Now.Add(ConnectTimeout);
-
-            while (ServiceStatus != ServiceState.Running)
-            {
-                if (timeout <= DateTime.Now)
-                {
-                    throw new TimeoutException("Timeout waiting for server conenction");
-                }
-
-                Thread.Sleep(TimeSpan.FromMilliseconds(ConnectTimeout.TotalMilliseconds / 10));
-            }
-
+            
             Session.SendChannelA(selectCharacter);
 
         }
-
-        #region Parse Baseline
-
-        protected BaselineMessage ParseBaselineMessage(Message Msg)
-        {
-            Msg.ReadIndex = 14;
-            MessageOp primaryType = (MessageOp)Msg.ReadInt32();
-
-            switch (primaryType)
-            {
-                case MessageOp.CREO:
-                    return ParseBaselineCREOMessage(Msg);
-                case MessageOp.SCLT:
-                    return ParseBaselineSCLTMessage(Msg);
-                case MessageOp.PLAY:
-                    return ParseBaselinePLAYMessage(Msg);
-                case MessageOp.STAO:
-                    return ParseBaselineSTAOMessage(Msg);
-                case MessageOp.TANO:
-                    return ParseBaselineTANOMessage(Msg);
-                case MessageOp.ITNO:
-                    return ParseBaselineITNOMessage(Msg);
-            }
-
-            return null;
-        }
-
-
-        protected BaselineMessage ParseBaselineITNOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new IntangibleObjectMessage3(Msg, true);
-                case 0x06:
-                    return new IntangibleObjectMessage6(Msg, true);
-            }
-            return null;
-        }
-
-
-        protected BaselineMessage ParseBaselineTANOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new TangibleObjectMessage3(Msg, true);
-                case 0x06:
-                    return new TangibleObjectMessage6(Msg, true);
-                case 0x07:
-                    return new TangibleObjectMessage7(Msg, true);
-            }
-            return null;
-        }
-
-
-        protected BaselineMessage ParseBaselineSTAOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new StaticObjectMessage3(Msg,true);
-            }
-            return null;
-        }
-
-
-        protected BaselineMessage ParseBaselinePLAYMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new PlayerObjectMessage3(Msg,true);
-                case 0x06:
-                    return new PlayerObjectMessage6(Msg,true);
-                case 0x08:
-                    return new PlayerObjectMessage8(Msg,true);
-                case 0x09:
-                    return new PlayerObjectMessage9(Msg,true);
-            }
-            return null;
-        }
-        
-        protected BaselineMessage ParseBaselineSCLTMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new CellObjectMessage3(Msg,true);
-            }
-            return null;
-        }
-
-
-        protected BaselineMessage ParseBaselineCREOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x01:
-                    return new CreatureObjectMessage1(Msg,true);
-                case 0x03:
-                    return new CreatureObjectMessage3(Msg,true);
-                case 0x04:
-                    return new CreatureObjectMessage4(Msg,true);
-                case 0x06:
-                    return new CreatureObjectMessage6(Msg,true);
-            }
-            return null;
-        }
-        #endregion
-
-        #region Parse Delta
-
-        protected DeltaMessage ParseDeltaMessage(Message Msg)
-        {
-            Msg.ReadIndex = 14;
-            MessageOp primaryType = (MessageOp)Msg.ReadInt32();
-
-            switch (primaryType)
-            {
-                case MessageOp.CREO:
-                    return ParseDeltaCREOMessage(Msg);
-                case MessageOp.SCLT:
-                    return ParseDeltaSCLTMessage(Msg);
-                case MessageOp.PLAY:
-                    return ParseDeltaPLAYMessage(Msg);
-                case MessageOp.STAO:
-                    return ParseDeltaSTAOMessage(Msg);
-                case MessageOp.TANO:
-                    return ParseDeltaTANOMessage(Msg);
-                case MessageOp.ITNO:
-                    return ParseDeltaITNOMessage(Msg);
-            }
-
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaITNOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new IntangibleObjectDeltaMessage3(Msg, true);
-            }
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaTANOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new TangibleObjectDeltaMessage3(Msg, true);
-                case 0x06:
-                    return new TangibleObjectDeltaMessage6(Msg, true);
-            }
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaSTAOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-            }
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaPLAYMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x03:
-                    return new PlayerObjectDeltaMessage3(Msg, true);
-                case 0x06:
-                    return new PlayerObjectDeltaMessage6(Msg, true);
-                case 0x08:
-                    return new PlayerObjectDeltaMessage8(Msg, true);
-                case 0x09:
-                    return new PlayerObjectDeltaMessage9(Msg, true);
-            }
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaSCLTMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-            }
-            return null;
-        }
-
-
-        private DeltaMessage ParseDeltaCREOMessage(Message Msg)
-        {
-            byte secondayType = Msg.ReadByte();
-            switch (secondayType)
-            {
-                case 0x01:
-                    return new CreatureObjectDeltaMessage1(Msg, true);
-                case 0x03:
-                    return new CreatureObjectDeltaMessage3(Msg, true);
-                case 0x04:
-                    return new CreatureObjectDeltaMessage4(Msg, true);
-                case 0x06:
-                    return new CreatureObjectDeltaMessage6(Msg, true);
-            }
-            return null;
-        }
-
-        #endregion
-
-        #region Register Messages Region
-        public bool RegisterMessageObject(MessageOp opcode, Func<Message, Message> createFunc)
-        {
-            return RegisterMessageObject((uint)opcode, createFunc);
-        }
-
-        public bool RegisterMessageObject(uint opcode, Func<Message, Message> createFunc)
-        {
-            return RegisteredObjects.TryAdd(opcode, createFunc);
-        }
-
-        public bool RegisterMessageObject<T>(uint opcode)
-            where T : Message, new()
-        {
-            return RegisterMessageObject(opcode, (msg) => Message.Create<T>(msg));
-        }
-
-        public bool RegisterMessageObject<T>(MessageOp opcode)
-            where T : Message, new()
-        {
-            return RegisterMessageObject<T>((uint) opcode);
-        }
-
-        public bool RegisterBaselineObject<T>(uint opcode, uint secondary)
-            where T : BaselineMessage, new()
-        {
-            return RegisteredBaselines.TryAdd(opcode + secondary, (msg) => Message.Create<T>(msg));
-        }
-
-        public bool RegisterBaselineObject<T>(MessageOp opcode, uint secondary)
-            where T : BaselineMessage, new()
-        {
-            return RegisterBaselineObject<T>((uint) opcode, secondary);
-        }
-
-        public bool RegisterDeltaObject<T>(uint opcode, uint secondary)
-            where T : DeltaMessage, new()
-        {
-            return RegisteredDeltas.TryAdd(opcode + secondary, (msg) => Message.Create<T>(msg));
-        }
-
-        public bool RegisterDeltaObject<T>(MessageOp opcode, uint secondary)
-            where T : DeltaMessage, new()
-        {
-            return RegisterDeltaObject<T>((uint)opcode, secondary);
-        }
-
-
-        public void RegisterCreatesFromAssembly()
-        {
-
-            RegisterMessageObject(MessageOp.BaselinesMessage, HandleBaselineMessage);
-            RegisterMessageObject(MessageOp.DeltasMessage, HandleDeltaMessage);
-
-            var registerMethodInfo = GetType().GetMethod("RegisterMessageObject", new[] { typeof(uint) });
-
-            foreach (
-                var type in
-                    GetType()
-                        .Assembly.GetTypes()
-                        .Where(cur => cur.GetCustomAttributes(typeof (RegisterMessageAttribute), false).Length >= 1))
-            {
-                var attr =
-                    (RegisterMessageAttribute)
-                        type.GetCustomAttributes(typeof(RegisterMessageAttribute), false).First();
-
-                var genericRegister = registerMethodInfo.MakeGenericMethod(type);
-                genericRegister.Invoke(this, new object[] {attr.OpCode});
-            }
-
-
-            registerMethodInfo = GetType().GetMethod("RegisterBaselineObject", new[] { typeof(uint), typeof(uint) });
-
-            foreach (
-                var type in
-                    GetType()
-                        .Assembly.GetTypes()
-                        .Where(cur => cur.GetCustomAttributes(typeof(RegisterBaselineMessageAttribute), false).Length >= 1))
-            {
-                var attr =
-                    (RegisterBaselineMessageAttribute)
-                        type.GetCustomAttributes(typeof(RegisterBaselineMessageAttribute), false).First();
-
-                var genericRegister = registerMethodInfo.MakeGenericMethod(type);
-                genericRegister.Invoke(this, new object[] { attr.OpCode, attr.Secondary.GetValueOrDefault()  });
-            }
-
-            registerMethodInfo = GetType().GetMethod("RegisterDeltaObject", new[] { typeof(uint), typeof(uint) });
-
-            foreach (
-                var type in
-                    GetType()
-                        .Assembly.GetTypes()
-                        .Where(cur => cur.GetCustomAttributes(typeof(RegisterDeltaMessageAttribute), false).Length >= 1))
-            {
-                var attr =
-                    (RegisterDeltaMessageAttribute)
-                        type.GetCustomAttributes(typeof(RegisterDeltaMessageAttribute), false).First();
-
-
-                var genericRegister = registerMethodInfo.MakeGenericMethod(type);
-                genericRegister.Invoke(this, new object[] { attr.OpCode, attr.Secondary.GetValueOrDefault() });
-            }
-
-
-        }
-
-        protected virtual Message HandleBaselineMessage(Message message)
-        {
-            message.ReadIndex = 14;
-            uint opcode = message.ReadUInt32();
-            uint secondary = message.ReadByte();
-            uint key = opcode + secondary;
-
-            Func<Message, Message> createFactory = null;
-            if (RegisteredBaselines.TryGetValue(key, out createFactory))
-            {
-                return createFactory(message);
-            }
-
-            return null;
-        }
-
-        protected virtual Message HandleDeltaMessage(Message message)
-        {
-            message.ReadIndex = 14;
-            uint opcode = message.ReadUInt32();
-            uint secondary = message.ReadByte();
-            uint key = opcode + secondary;
-
-            Func<Message, Message> createFactory = null;
-            if (RegisteredDeltas.TryGetValue(key, out createFactory))
-            {
-                return createFactory(message);
-            }
-
-            return null;
-        }
-
-        #endregion
-
     }
 }

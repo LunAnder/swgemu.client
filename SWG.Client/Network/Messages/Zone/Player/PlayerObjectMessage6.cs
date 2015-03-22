@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Network.Messages.Zone.Creature;
 using SWG.Client.Utils;
 

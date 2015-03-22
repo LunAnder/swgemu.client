@@ -151,6 +151,9 @@ namespace SWG.Client.Network
         ITNO = 0x49544e4fu,
         SecureTrade = 0x00000115u,
         STAO = 0x5354414Fu,
+
+        WeaponObjectMessage = 0x5745414Fu,
+
         //ImageDesigner
         StatMigrationStart = 0xefac38c4u,
 

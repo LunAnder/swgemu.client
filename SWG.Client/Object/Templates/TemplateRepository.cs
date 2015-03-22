@@ -19,5 +19,10 @@ namespace SWG.Client.Object.Templates
         {
             return ArchiveRepo.LoadStf(toLoad);
         }
+
+        public CSTBFile LoadCrCMap(string path)
+        {
+            return ArchiveRepo.LoadCrCMap(path);
+        }
     }
 }

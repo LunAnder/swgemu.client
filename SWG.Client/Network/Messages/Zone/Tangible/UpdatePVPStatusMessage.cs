@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 
 namespace SWG.Client.Network.Messages.Zone.Tangible

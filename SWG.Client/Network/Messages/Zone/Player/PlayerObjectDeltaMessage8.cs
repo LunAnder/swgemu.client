@@ -4,8 +4,10 @@ using System.Linq;
 using System.Text;
 using SWG.Client.Network;
 using SWG.Client.Network.Messages;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Network.Objects.Zone.Player;
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 
 namespace SWG.Client.Network.Messages.Zone.Player

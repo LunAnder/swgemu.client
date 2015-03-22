@@ -1,4 +1,5 @@
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 namespace SWG.Client.Network.Messages.Zone
 {

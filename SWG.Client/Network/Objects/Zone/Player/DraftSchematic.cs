@@ -1,5 +1,5 @@
 using SWG.Client.Network.Messages;
-
+using SWG.Client.Network.Messages.Base;
 
 
 namespace SWG.Client.Network.Objects.Zone.Player

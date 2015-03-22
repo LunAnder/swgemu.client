@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Tangible
 {
+    [RegisterBaselineMessage(MessageOp.WeaponObjectMessage, 0x03)]
     [RegisterBaselineMessage(MessageOp.TANO, 0x03)]
     public class TangibleObjectMessage3 : BaselineMessage
     {

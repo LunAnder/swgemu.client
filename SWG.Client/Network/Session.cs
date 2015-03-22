@@ -4,7 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Collections.Concurrent;
-
+using SWG.Client.Network.Messages.Zone.Cell;
 using SWG.Client.Utils;
 
 
@@ -60,9 +60,9 @@ namespace SWG.Client.Network
 
         private UInt32 _lastSequenceAcked;
 
-        private Queue<Message> _outgoingMessageQueue = new Queue<Message>();
+        private ConcurrentQueue<Message> _outgoingMessageQueue = new ConcurrentQueue<Message>();
         private ConcurrentQueue<Message> _unreliableMessageQueue = new ConcurrentQueue<Message>();
-        public Queue<Message> IncomingMessageQueue { get; set; }
+        public ConcurrentQueue<Message> IncomingMessageQueue { get; set; }
 
         public int RequestId
         {
@@ -109,7 +109,7 @@ namespace SWG.Client.Network
             MaxUreliablePacketSize = 496;
             _windowSizeCurrent = 8000;
             WindowResendSize = 8000;
-            IncomingMessageQueue = new Queue<Message>();
+            IncomingMessageQueue = new ConcurrentQueue<Message>();
 
             ConnectionEstablished += (sender, args) => { };
         }
@@ -117,7 +117,7 @@ namespace SWG.Client.Network
 
         public void ProcessWriteThread()
         {
-            UInt64 now = DateTime.UtcNow.GetMilliseconds();
+            var now = DateTime.UtcNow.GetMilliseconds();
 
             if (_unreliableMessageQueue.Count > 0 && _outgoingMessageQueue.Count > 0 && _newWindowPacketList.Count > 0)
             {
@@ -133,14 +133,15 @@ namespace SWG.Client.Network
             {
                 _sendDelayedAcks = false;
 
-                Packet packet = new Packet();
+                var packet = new Packet();
                 packet.AddData(Convert.ToUInt16(SessionOp.DataAck1));
-                packet.AddNetworkData((UInt16)(_inSequenceNext - 1));
+                packet.AddNetworkData((ushort)(_inSequenceNext - 1));
                 packet.Size = packet.WriteIndex;
                 packet.Compressed = false;
                 packet.Encrypted = true;
 
-                _AddOutgoingUnreliablePacket(packet);
+                _logger.Trace("Sending DataAck with sequence {0}", _inSequenceNext - 1);
+                AddOutgoingUnreliablePacket(packet);
             }
 
             UInt32 packetsBuilt = 0;
@@ -148,12 +149,12 @@ namespace SWG.Client.Network
 
             while (packetsBuilt < 200 && _outgoingMessageQueue.Count > 0)
             {
-                packetsBuilt += _BuildPackets();
+                packetsBuilt += BuildPackets();
             }
 
             while (unreliablePacketsBuilt < 200 && _unreliableMessageQueue.Count > 0)
             {
-                unreliablePacketsBuilt += _BuildUreliablePackets();
+                unreliablePacketsBuilt += BuildUreliablePackets();
             }
 
             UInt32 packetsSent = 0;
@@ -161,15 +162,16 @@ namespace SWG.Client.Network
             if (_outSequenceRollover)
             {
                 var newRolloverWindowPacketList = new List<Packet>(_newRolloverWindowPacketList);
-                foreach (Packet packet in newRolloverWindowPacketList)
+                foreach (var packet in newRolloverWindowPacketList)
                 {
                     packet.ReadIndex = 2;
                     if (packetsSent >= _windowSizeCurrent)
                     {
+                        _logger.Trace("Packets sent are at the window size: {0}/{1}", packetsSent, _windowSizeCurrent);
                         break;
                     }
 
-                    _AddOutgoingReliablePacket(packet);
+                    AddOutgoingReliablePacket(packet);
                     packet.TimeQueued = DateTimeExt.GetStoredMilliseconds();
 
                     _newRolloverWindowPacketList.Remove(packet);
@@ -181,12 +183,16 @@ namespace SWG.Client.Network
             }
 
             var newWindowPacketList = new List<Packet>(_newWindowPacketList);
-            foreach (Packet packet in newWindowPacketList)
+            foreach (var packet in newWindowPacketList)
             {
-                if(packetsSent >= _windowSizeCurrent)
+                if (packetsSent >= _windowSizeCurrent)
+                {
+                    _logger.Trace("Packets sent are at the window size: {0}/{1}", packetsSent, _windowSizeCurrent);
                     break;
+                }
+                    
 
-                _AddOutgoingReliablePacket(packet);
+                AddOutgoingReliablePacket(packet);
 
                 _windowPacketList.Add(packet);
 
@@ -196,13 +202,17 @@ namespace SWG.Client.Network
                 _newWindowPacketList.Remove(packet);
             }
 
+
+            //_logger.Trace("RPackets Built: {0}. UPackets Built: {1}. Sent Packets: {2}. Elapsed ms: {3}",
+            //        packetsBuilt, unreliablePacketsBuilt, packetsSent, DateTime.UtcNow.GetMilliseconds() - now);
+
             switch (Command)
             {
                 case SessionCommand.Connect:
-                    _ProcessConnectCommand();
+                    ProcessConnectCommand();
                     break;
                 case SessionCommand.Disconnect:
-                    _ProcessDisconectCommand();
+                    ProcessDisconectCommand();
                     break;
             }
 
@@ -214,37 +224,36 @@ namespace SWG.Client.Network
             }
 
 
-            if (Status == SessionStatus.Connected)
+            if (Status != SessionStatus.Connected)
             {
-                UInt64 diff = now - _lastPacketRecieved;
+                return;
+            }
+            var diff = now - _lastPacketRecieved;
                 
 
-                if (diff > 60000)
-                {
-                    Command = SessionCommand.Disconnect;
-                }
-                else if (diff > 10000)
-                {
-                    _SendPingPacket();
-                }
-
-                _ResendData(); 
+            if (diff > 60000)
+            {
+                Command = SessionCommand.Disconnect;
+            }
+            else if (diff > 10000)
+            {
+                SendPingPacket();
             }
 
+            ResendData();
         }
 
 
-        private void _SendPingPacket()
+        private void SendPingPacket()
         {
-
-            /*Console.WriteLine("sending ping");
-            Packet packet = new Packet();
+            _logger.Trace("sending ping packet");
+            var packet = new Packet();
             packet.AddData((UInt16)SessionOp.Ping);
 
             packet.Compressed = false;
             packet.Encrypted = true;
 
-            _AddOutgoingUnreliablePacket(packet, true);*/
+            AddOutgoingUnreliablePacket(packet, true);
         }
 
 
@@ -255,7 +264,7 @@ namespace SWG.Client.Network
                 return;
             }
 
-            if (message.FastPath /*|| message.Size < MaxUreliablePacketSize*/)
+            if (message.FastPath)
             {
                 _unreliableMessageQueue.Enqueue(message);
             }
@@ -300,42 +309,43 @@ namespace SWG.Client.Network
 
             var packetType = packet.PacetTypeEnum;
 
-            _logger.Debug("HandleSessionPacket: type: {0}. len: {1}", packetType, packet.Size);
+            _logger.Trace("HandleSessionPacket: type: {0}. len: {1}", packetType, packet.Size);
 
             switch (packetType)
             {
                 case SessionOp.SessionResponse:
-                    _ProcessSessionResponsePacket(packet);
+                    ProcessSessionResponsePacket(packet);
                     return;
                 case SessionOp.DataOrder1:
                 case SessionOp.DataOrder2:
                 case SessionOp.DataOrder3:
                 case SessionOp.DataOrder4:
-                    _ProcessDataOrderPacket(packet);
+                    ProcessDataOrderPacket(packet);
                     return;
                 case SessionOp.MultiPacket:
-                    _ProcessMultiPacket(packet);
+                    ProcessMultiPacket(packet);
                     return;
                 case SessionOp.Disconnect:
                     Status = SessionStatus.Disconnecting;
-                    _ProcessDisconnectPacket(packet);
+                    ProcessDisconnectPacket(packet);
                     return;
                 case SessionOp.DataAck1:
                 case SessionOp.DataAck2:
                 case SessionOp.DataAck3:
                 case SessionOp.DataAck4:
-                    _ProcessDataChannelAck(packet);
+                    ProcessDataChannelAck(packet);
                     return;
                 case SessionOp.Ping:
-                    _ProcessPingPacket(packet);
+                    ProcessPingPacket(packet);
                     return;
                 case SessionOp.NetStatResponse:
-                    _ProcessNetStatResponsePacket(packet);
+                    ProcessNetStatResponsePacket(packet);
                     return;
             }
 
             packet.ReadIndex = 2;
-            UInt16 sequence = packet.ReadNetworkUInt16();
+            var sequence = packet.ReadNetworkUInt16();
+            
             if (_inSequenceNext == sequence)
             {
                 SortSessionPacket(packet, packetType);
@@ -344,23 +354,28 @@ namespace SWG.Client.Network
             else if (_inSequenceNext < sequence)
             {
 
-                _logger.Warn("out of order packet. Recieved Seq: {0}. Expected: {1}", sequence, _inSequenceNext);
+                
                 var prevPacket = _inSequenceNext - 1;
                 if (prevPacket < 0)
                 {
                     prevPacket = 0;
                 }
-                Packet orderPacket = new Packet();
+
+                _logger.Warn(
+                    "out of order packet. Recieved Seq: {0}. Expected: {1}. sending DataOrder with sequence: {2}",
+                    sequence, _inSequenceNext, prevPacket);
+
+                var orderPacket = new Packet();
                 orderPacket.AddData(Convert.ToUInt16(SessionOp.DataOrder1));
                 orderPacket.AddNetworkData(prevPacket);
                 orderPacket.Compressed = false;
                 orderPacket.Encrypted = true;
 
-                _AddOutgoingUnreliablePacket(orderPacket, true);
+                AddOutgoingUnreliablePacket(orderPacket, true);
             }
             else
             {
-                _logger.Debug("Sequence {0} lesser than next seq {1}. Dropping.", sequence, _inSequenceNext);
+                _logger.Trace("Sequence {0} lesser than next seq {1}. Dropping.", sequence, _inSequenceNext);
             }
         }
 
@@ -372,20 +387,20 @@ namespace SWG.Client.Network
             switch (packetType)
             {
                 case SessionOp.DataChannel2:
-                    _ProcessDataChannelB(packet);
+                    ProcessDataChannelB(packet);
                     break;
                 case SessionOp.DataChannel1:
                 case SessionOp.DataChannel3:
                 case SessionOp.DataChannel4:
-                    _ProcessDataChannelPacket(packet, false);
+                    ProcessDataChannelPacket(packet, false);
                     break;
                 case SessionOp.DataFrag2:
-                    _ProcessRoutedFragmentedPacket(packet);
+                    ProcessRoutedFragmentedPacket(packet);
                     break;
                 case SessionOp.DataFrag1:
                 case SessionOp.DataFrag3:
                 case SessionOp.DataFrag4:
-                    _ProcessFragmentedPacket(packet);
+                    ProcessFragmentedPacket(packet);
                     break;
             }
         }
@@ -393,13 +408,13 @@ namespace SWG.Client.Network
 
         public void HandleFastpahPacket(Packet packet)
         {
-            _logger.Debug("HandleFastpahPacket: type: {0}. len: {1}", packet.PacetTypeEnum, packet.Size);
+            _logger.Trace("HandleFastpahPacket: type: {0}. len: {1}", packet.PacetTypeEnum, packet.Size);
 
             byte priority = 0;
             byte routed = 0;
             byte dest = 0;
             UInt32 accountId = 0;
-            int offset = 2;
+            var offset = 2;
 
             _lastPacketRecieved = DateTimeExt.GetStoredMilliseconds();
 
@@ -420,7 +435,7 @@ namespace SWG.Client.Network
                         FastPath = true,
                 };
 
-            _AddIncomingMessage(msg, priority);
+            AddIncomingMessage(msg, priority);
 
         }
 
@@ -432,6 +447,7 @@ namespace SWG.Client.Network
             {
                 _serverPacketsSent++;
                 _lastPacketSent = DateTimeExt.GetStoredMilliseconds();
+                _logger.Trace("reliable outgoing packet({0}) dequeued", packet.PacetTypeEnum);
             }
 
             return packet;
@@ -441,24 +457,30 @@ namespace SWG.Client.Network
         public Packet GetOutgoingUnreliablePacket()
         {
             Packet packet = null;
-            if (_unreliableOutgoingPacketQueue.TryDequeue(out packet))
+            if (!_unreliableOutgoingPacketQueue.TryDequeue(out packet))
             {
-                _serverPacketsSent++;
-                _lastPacketSent = DateTimeExt.GetStoredMilliseconds();
+                return packet;
             }
+            _logger.Trace("unreliable outgoing packet({0}) dequeued", packet.PacetTypeEnum);
+            _serverPacketsSent++;
+            _lastPacketSent = DateTimeExt.GetStoredMilliseconds();
 
             return packet;
         }
 
 
 
-        protected void _AddIncomingMessage(Message message, byte priority = 0)
+        protected void AddIncomingMessage(Message message, byte priority = 0)
         {
-            IncomingMessageQueue.Enqueue(message);
+            if (message != null)
+            {
+                IncomingMessageQueue.Enqueue(message);    
+            }
+            
         }
 
 
-        protected void _AddOutgoingReliablePacket(Packet packet, bool SetSizeFromWriteIndex = false)
+        protected void AddOutgoingReliablePacket(Packet packet, bool SetSizeFromWriteIndex = false)
         {
             if (SetSizeFromWriteIndex)
             {
@@ -471,7 +493,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _AddOutgoingUnreliablePacket(Packet packet, bool SetSizeFromWriteIndex = false)
+        protected void AddOutgoingUnreliablePacket(Packet packet, bool SetSizeFromWriteIndex = false)
         {
             if (SetSizeFromWriteIndex)
             {
@@ -484,14 +506,14 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessSessionResponsePacket(Packet packet)
+        protected void ProcessSessionResponsePacket(Packet packet)
         {
 
             packet.ReadIndex = 2;
             var requestID = packet.ReadUInt32();
             if (requestID != RequestId)
             {
-                _logger.Debug("Warning. request id does not match. Recieved: {0}. Expected {1}", requestID, RequestId)  ;
+                _logger.Warn("Warning. request id does not match. Recieved: {0}. Expected {1}", requestID, RequestId)  ;
             }
 
             EncryptionKey = packet.ReadNetworkUInt32();
@@ -506,7 +528,7 @@ namespace SWG.Client.Network
                 MaxPacketSize = udpPacketSize;
             }
 
-            _logger.Debug("CRC Len: {0}. Compression: {1}. Seed Size: {2}. UDP Packet Size: {3}", crcLength, useCompression, seedSise, udpPacketSize);
+            _logger.Debug("Session Established. CRC Len: {0}. Compression: {1}. Seed Size: {2}. UDP Packet Size: {3}", crcLength, useCompression, seedSise, udpPacketSize);
 
             Status = SessionStatus.Connected;
             if (Command == SessionCommand.Connect)
@@ -518,19 +540,19 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessDataOrderPacket(Packet packet)
+        protected void ProcessDataOrderPacket(Packet packet)
         {
             packet.ReadIndex = 2;
 
-            UInt32 hbsequence = packet.PeekUInt32();
-            UInt16 sequence = packet.ReadNetworkUInt16();
+            var hbsequence = packet.PeekUInt32();
+            var sequence = packet.ReadNetworkUInt16();
             _logger.Debug("Out of order sequence: {0}. hb order: {1}", sequence, hbsequence);
-            Packet windowPacket = _windowPacketList.FirstOrDefault();
+            var windowPacket = _windowPacketList.FirstOrDefault();
             if (windowPacket == null)
                 return;
 
             windowPacket.ReadIndex = 2;
-            UInt16 windowSeq = windowPacket.ReadNetworkUInt16();
+            var windowSeq = windowPacket.ReadNetworkUInt16();
 
             if (sequence < windowSeq)
             {
@@ -549,10 +571,10 @@ namespace SWG.Client.Network
 
             if (_rolloverWindowPacketList.Count != 0 && (sequence > (65535 - _newRolloverWindowPacketList.Count)))
             {
-                foreach (Packet rollPacket in _rolloverWindowPacketList)
+                foreach (var rollPacket in _rolloverWindowPacketList)
                 {
                     rollPacket.ReadIndex = 2;
-                    UInt16 rollSequence = rollPacket.ReadNetworkUInt16();
+                    var rollSequence = rollPacket.ReadNetworkUInt16();
 
                     if (rollSequence < sequence)
                     {
@@ -561,7 +583,7 @@ namespace SWG.Client.Network
                             break;
                         }
 
-                        _AddOutgoingReliablePacket(rollPacket);
+                        AddOutgoingReliablePacket(rollPacket);
                         rollPacket.OOHTimeSent = DateTimeExt.GetStoredMilliseconds();
 
                         if (WindowSizeCurrent > (WindowResendSize / 10))
@@ -573,19 +595,19 @@ namespace SWG.Client.Network
             }
 
 
-            UInt64 localTime = DateTimeExt.GetStoredMilliseconds();
+            var localTime = DateTimeExt.GetStoredMilliseconds();
             UInt16 seq;
 
-            foreach (Packet winPacket in _windowPacketList)
+            foreach (var winPacket in _windowPacketList)
             {
                 winPacket.ReadIndex = 2;
                 seq = winPacket.ReadNetworkUInt16();
 
-                UInt64 old = windowPacket.OOHTimeSent;
+                var old = windowPacket.OOHTimeSent;
 
                 if (localTime - old > 10000)
                 {
-                    _AddOutgoingUnreliablePacket(winPacket);
+                    AddOutgoingUnreliablePacket(winPacket);
                     winPacket.OOHTimeSent = localTime;
                 }
                 else
@@ -599,7 +621,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessMultiPacket(Packet packet)
+        protected void ProcessMultiPacket(Packet packet)
         {
             while (packet.ReadIndex < packet.Size)
             {
@@ -612,21 +634,21 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessDisconnectPacket(Packet packet)
+        protected void ProcessDisconnectPacket(Packet packet)
         {
             Status = SessionStatus.Disconnected;
         }
 
 
-        protected void _ProcessDataChannelAck(Packet packet)
+        protected void ProcessDataChannelAck(Packet packet)
         {
 
             packet.ReadIndex = 2;
             UInt16 windowSeq = 0;
-            UInt16 sequence = packet.ReadNetworkUInt16();
+            var sequence = packet.ReadNetworkUInt16();
             Packet windowPacket = null;
 
-            Int32 acked = 0;
+            var acked = 0;
 
             if (_outSequenceRollover)
             {
@@ -743,7 +765,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessPingPacket(Packet packet)
+        protected void ProcessPingPacket(Packet packet)
         {
             /*UInt64 now = DateTimeExt.GetStoredMilliseconds();
             UInt64 diff = now - _lastPingPacketRecieved;
@@ -762,15 +784,15 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessNetStatResponsePacket(Packet packet)
+        protected void ProcessNetStatResponsePacket(Packet packet)
         {
             packet.ReadIndex = 2;
-            UInt16 tick = packet.ReadNetworkUInt16();
-            UInt32 serverTick = packet.ReadNetworkUInt32();
-            ulong cPacketsSent = packet.ReadNetworkUInt64();
-            ulong cPacketsRecieved = packet.ReadNetworkUInt64();
-            ulong sPacketSent = packet.ReadNetworkUInt64();
-            ulong sPacketRecieved = packet.ReadNetworkUInt64();
+            var tick = packet.ReadNetworkUInt16();
+            var serverTick = packet.ReadNetworkUInt32();
+            var cPacketsSent = packet.ReadNetworkUInt64();
+            var cPacketsRecieved = packet.ReadNetworkUInt64();
+            var sPacketSent = packet.ReadNetworkUInt64();
+            var sPacketRecieved = packet.ReadNetworkUInt64();
 
             _logger.Debug(
                     "Netstat Res (tick: {0}, serverTick: {1}, client sent: {2}, client recieved: {3}. server sent: {4}. server recieved: {5})",
@@ -784,7 +806,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessDataChannelB(Packet packet)
+        protected void ProcessDataChannelB(Packet packet)
         {
             byte priority = 0;
             byte routed = 0;
@@ -798,7 +820,7 @@ namespace SWG.Client.Network
 
             if (routed == 0x19)
             {
-                Int32 size = Convert.ToInt32(packet.ReadByte());
+                var size = Convert.ToInt32(packet.ReadByte());
 
                 do
                 {
@@ -810,13 +832,13 @@ namespace SWG.Client.Network
                     priority = packet.ReadByte();
                     accountId = packet.ReadUInt32();
 
-                    Message msg = new Message(packet.Data, packet.ReadIndex, size - 7)
+                    var msg = new Message(packet.Data, packet.ReadIndex, size - 7)
                         {
                                 Priority = priority,
                                 Routed = true
                         };
 
-                    _AddIncomingMessage(msg, priority);
+                    AddIncomingMessage(msg, priority);
                     packet.ReadIndex += size - 7;
                     size = Convert.ToInt32(packet.ReadByte());
                 }
@@ -827,12 +849,12 @@ namespace SWG.Client.Network
                 dest = packet.ReadByte();
                 accountId = packet.ReadUInt32();
 
-                Message msg = new Message(packet.Data, packet.ReadIndex, packet.Size - packet.ReadIndex)
+                var msg = new Message(packet.Data, packet.ReadIndex, packet.Size - packet.ReadIndex)
                     {
                             Priority = priority,
                             Routed = true,
                     };
-                _AddIncomingMessage(msg, priority);
+                AddIncomingMessage(msg, priority);
             }
 
             _inSequenceNext++;
@@ -841,7 +863,7 @@ namespace SWG.Client.Network
 
 
 
-        protected void _ProcessDataChannelPacket(Packet packet, bool b)
+        protected void ProcessDataChannelPacket(Packet packet, bool b)
         {
             /*byte priority = 0;
             byte routed = 0;
@@ -879,7 +901,7 @@ namespace SWG.Client.Network
                         {
                                 Priority = priority,
                         };
-                    _AddIncomingMessage(msg, priority);
+                    AddIncomingMessage(msg, priority);
                     packet.ReadIndex += Convert.ToInt32(size) - 2;
                     size = Convert.ToUInt32(packet.ReadByte());
                 }
@@ -892,7 +914,7 @@ namespace SWG.Client.Network
 
             packet.ReadIndex = 4;
 
-            UInt16 multiPacket = packet.PeekNetworkUInt16();
+            var multiPacket = packet.PeekNetworkUInt16();
 
             if (multiPacket == 0x0019)
             {
@@ -907,8 +929,8 @@ namespace SWG.Client.Network
 
                 do
                 {
-                    Message subMessage = new Message(packet.Data, packet.ReadIndex, subPacketSize);
-                    _AddIncomingMessage(subMessage, 0);
+                    var subMessage = new Message(packet.Data, packet.ReadIndex, subPacketSize);
+                    AddIncomingMessage(subMessage, 0);
                     packet.ReadIndex += subPacketSize;
                     subPacketSize = packet.ReadByte();
 
@@ -922,7 +944,7 @@ namespace SWG.Client.Network
             }
             else
             {
-                _AddIncomingMessage(new Message(packet.Data, 4, packet.Size - 4), 0);
+                AddIncomingMessage(new Message(packet.Data, 4, packet.Size - 4), 0);
             }
             
             _inSequenceNext++;
@@ -930,15 +952,15 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessRoutedFragmentedPacket(Packet packet)
+        protected void ProcessRoutedFragmentedPacket(Packet packet)
         {
             packet.ReadIndex = 2;
 
-            UInt16 sequence = packet.ReadNetworkUInt16();
+            var sequence = packet.ReadNetworkUInt16();
 
-            byte priority = packet.ReadByte();
-            byte dest = packet.ReadByte();
-            UInt32 accountId = packet.ReadUInt32();
+            var priority = packet.ReadByte();
+            var dest = packet.ReadByte();
+            var accountId = packet.ReadUInt32();
 
             _inSequenceNext++;
             _sendDelayedAcks = true;
@@ -964,9 +986,9 @@ namespace SWG.Client.Network
 
                     Packet fragment = null;
 
-                    bool first = true;
+                    var first = true;
 
-                    Message msg = new Message(_routedFragmentedPacketTotalSize);
+                    var msg = new Message(_routedFragmentedPacketTotalSize);
                     while (_incomingRoutedFragmentedPacketQueue.Count != 0)
                     {
                         fragment = _incomingRoutedFragmentedPacketQueue.Dequeue();
@@ -997,7 +1019,7 @@ namespace SWG.Client.Network
                         return;
                     }
 
-                    _AddIncomingMessage(msg, priority);
+                    AddIncomingMessage(msg, priority);
 
                     _routedFragmentedPacketTotalSize = 0;
                     _routedFragmentedPacketCurrentSize = 0;
@@ -1014,11 +1036,11 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessFragmentedPacket(Packet packet)
+        protected void ProcessFragmentedPacket(Packet packet)
         {
             packet.ReadIndex = 2;
 
-            UInt16 sequence = packet.ReadNetworkUInt16();
+            var sequence = packet.ReadNetworkUInt16();
             byte priority = 0;
             byte routed = 0;
             byte dest = 0;
@@ -1026,10 +1048,12 @@ namespace SWG.Client.Network
 
             if (sequence < _inSequenceNext)
             {
+                _logger.Trace("Duplicated fragmented packet {0}. Current Seq: {1}", sequence, _inSequenceNext);
                 return;
             }
             else if (sequence > _inSequenceNext)
             {
+                _logger.Trace("Fragmented packt recieved out of sequence: {0}. Current sequence: {1}", sequence, _inSequenceNext);
                 return;
             }
 
@@ -1060,10 +1084,10 @@ namespace SWG.Client.Network
                 {
                     _incomingFragmentedPacketQueue.Enqueue(packet);
 
-                    Message msg = new Message(_fragmentedPacketTotalSize);
+                    var msg = new Message(_fragmentedPacketTotalSize);
                     Packet fragment = null;
 
-                    bool first = true;
+                    var first = true;
 
                     while (_incomingFragmentedPacketQueue.Count != 0)
                     {
@@ -1097,10 +1121,11 @@ namespace SWG.Client.Network
 
                     if (priority > 0x10)
                     {
+                        _logger.Trace("Invalid fragmented packet priority: {0:X}", priority);
                         return;
                     }
 
-                    _AddIncomingMessage(msg, priority);
+                    AddIncomingMessage(msg, priority);
 
                     _fragmentedPacketTotalSize = 0;
                     _fragmentedPacketCurrentSize = 0;
@@ -1118,7 +1143,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _ProcessConnectCommand()
+        protected void ProcessConnectCommand()
         {
             if (Status == SessionStatus.Initialize)
             {
@@ -1138,12 +1163,12 @@ namespace SWG.Client.Network
                     }
                     else
                     {
-                        _logger.Debug("connect packet");
+                        _logger.Debug("sending connect packet");
                         _lastConnectAttempt = DateTime.UtcNow.GetMilliseconds();
                         if(RequestId == 0)
                             RequestId = (new Random(DateTime.UtcNow.Second)).Next();
 
-                        Packet sessReqPacket = new Packet();
+                        var sessReqPacket = new Packet();
                         sessReqPacket.AddData((UInt16)SessionOp.SessionRequest);
                         sessReqPacket.AddNetworkData((UInt16)2); // crc size
                         sessReqPacket.AddData((UInt16)0u);
@@ -1155,43 +1180,43 @@ namespace SWG.Client.Network
                         sessReqPacket.Compressed = false;
                         sessReqPacket.Encrypted = false;
 
-                        _AddOutgoingUnreliablePacket(sessReqPacket, true);
+                        AddOutgoingUnreliablePacket(sessReqPacket, true);
                     }
                 }
             }
         }
 
 
-        protected void _ProcessDisconectCommand()
+        protected void ProcessDisconectCommand()
         {
             _logger.Debug("disconnect packet");
 
             Status = SessionStatus.Disconnecting;
             Command = SessionCommand.None;
 
-            Packet packet = new Packet();
+            var packet = new Packet();
             packet.AddData((UInt16)SessionOp.Disconnect);
             packet.AddNetworkData(RequestId);
             packet.AddNetworkData((UInt16)2);
             packet.Compressed = false;
             packet.Encrypted = true;
 
-            _AddOutgoingUnreliablePacket(packet, true);
+            AddOutgoingUnreliablePacket(packet, true);
         }
 
-        protected void _ResendData()
+        protected void ResendData()
         {
             if (_windowPacketList.Count == 0)
             {
                 return;
             }
 
-            UInt64 localTime = DateTime.UtcNow.GetMilliseconds();
+            var localTime = DateTime.UtcNow.GetMilliseconds();
             UInt64 waitTime = 0;
             UInt64 oohTime = 0;
-            Int32 packetsSent = 0;
+            var packetsSent = 0;
 
-            foreach (Packet rolloverPacket in _rolloverWindowPacketList)
+            foreach (var rolloverPacket in _rolloverWindowPacketList)
             {
                 if (rolloverPacket.TimeSent == 0)
                 {
@@ -1204,7 +1229,7 @@ namespace SWG.Client.Network
                 if (waitTime > 700 && oohTime > 700)
                 {
                     rolloverPacket.OOHTimeSent = localTime;
-                    _AddOutgoingReliablePacket(rolloverPacket);
+                    AddOutgoingReliablePacket(rolloverPacket);
                     packetsSent++;
                 }
                 else
@@ -1215,7 +1240,7 @@ namespace SWG.Client.Network
 
             localTime = DateTime.UtcNow.GetMilliseconds();
 
-            foreach (Packet windowPacket in _windowPacketList)
+            foreach (var windowPacket in _windowPacketList)
             {
                 if (windowPacket.TimeSent == 0)
                 {
@@ -1228,7 +1253,7 @@ namespace SWG.Client.Network
                 if (waitTime > 700 && oohTime > 700)
                 {
                     windowPacket.OOHTimeSent = localTime;
-                    _AddOutgoingReliablePacket(windowPacket);
+                    AddOutgoingReliablePacket(windowPacket);
                     packetsSent++;
                 }
                 else
@@ -1238,12 +1263,12 @@ namespace SWG.Client.Network
             }
         }
 
-        protected void _BuildOutgoingReliableRoutedPackets(Message message)
+        protected void BuildOutgoingReliableRoutedPackets(Message message)
         {
             Packet newPacket = null;
             UInt16 messageIndex = 0;
             UInt16 envelopSize = 18;
-            UInt16 messageSize = Convert.ToUInt16(message.Size);
+            var messageSize = Convert.ToUInt16(message.Size);
 
             if (messageSize + envelopSize > MaxPacketSize)
             {
@@ -1267,7 +1292,7 @@ namespace SWG.Client.Network
 
                 if (_outSequenceNext == UInt16.MaxValue)
                 {
-                    _HandleOutSequenceRollover();
+                    HandleOutSequenceRollover();
                 }
                 else
                 {
@@ -1293,7 +1318,7 @@ namespace SWG.Client.Network
 
                     if (_outSequenceNext == UInt16.MaxValue)
                     {
-                        _HandleOutSequenceRollover();
+                        HandleOutSequenceRollover();
                     }
                     else
                     {
@@ -1323,7 +1348,7 @@ namespace SWG.Client.Network
 
                 if (_outSequenceNext == UInt16.MaxValue)
                 {
-                    _HandleOutSequenceRollover();
+                    HandleOutSequenceRollover();
                 }
                 else
                 {
@@ -1332,18 +1357,18 @@ namespace SWG.Client.Network
             }
         }
 
-        protected void _BuildOutgoingReliablePackets(Message message)
+        protected void BuildOutgoingReliablePackets(Message message)
         {
-            _logger.Debug("build outgoing reliable packet. Sequence: {0}", _outSequenceNext);
+            _logger.Trace("build outgoing reliable packet. Sequence: {0}", _outSequenceNext);
             
             UInt16 messageIndex = 0;
             UInt16 envelopSize = 13;
-            UInt16 messageSize = Convert.ToUInt16(message.Size);
+            var messageSize = Convert.ToUInt16(message.Size);
 
             if (messageSize + envelopSize > MaxPacketSize)
             {
-                _logger.Debug("Fragmented Packet");
-                Packet fragmentedPacket = new Packet(MaxPacketSize);
+                _logger.Trace("Fragmented Packet");
+                var fragmentedPacket = new Packet(MaxPacketSize);
                 fragmentedPacket.AddData((UInt16)SessionOp.DataFrag1);
                 fragmentedPacket.AddNetworkData(_outSequenceNext);
                 fragmentedPacket.AddNetworkData(messageSize + 2);
@@ -1361,7 +1386,7 @@ namespace SWG.Client.Network
 
                 if (_outSequenceNext == UInt16.MaxValue)
                 {
-                    _HandleOutSequenceRollover();
+                    HandleOutSequenceRollover();
                 }
                 else
                 {
@@ -1387,7 +1412,7 @@ namespace SWG.Client.Network
 
                     if (_outSequenceNext == UInt16.MaxValue)
                     {
-                        _HandleOutSequenceRollover();
+                        HandleOutSequenceRollover();
                     }
                     else
                     {
@@ -1400,7 +1425,7 @@ namespace SWG.Client.Network
             else
             {
                 //newPacket = new Packet(message.Size + 4);
-                Packet dataPacket = new Packet();
+                var dataPacket = new Packet();
                 dataPacket.AddData((UInt16)SessionOp.DataChannel1);
                 dataPacket.AddNetworkData((ushort)_outSequenceNext); //sequence
                 dataPacket.AddData(message.Data, 0, message.Size);
@@ -1414,7 +1439,7 @@ namespace SWG.Client.Network
 
                 if (_outSequenceNext == UInt16.MaxValue)
                 {
-                    _HandleOutSequenceRollover();
+                    HandleOutSequenceRollover();
                 }
                 else
                 {
@@ -1424,9 +1449,9 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _BuildOutoingUnreliablePakets(Message message)
+        protected void BuildOutoingUnreliablePakets(Message message)
         {
-            Packet toSend = new Packet(message.Size);
+            var toSend = new Packet(message.Size);
             /*toSend.AddData(message.Priority);
             toSend.AddData((byte)(message.Routed ? 1 : 0));
             if (message.Routed)
@@ -1440,11 +1465,11 @@ namespace SWG.Client.Network
             toSend.Compressed = false;
             toSend.Encrypted = true;
 
-            _AddOutgoingUnreliablePacket(toSend, true);
+            AddOutgoingUnreliablePacket(toSend, true);
 
         }
 
-        protected UInt32 _BuildPackets()
+        protected UInt32 BuildPackets()
         {
             UInt32 packetsBuilt = 0;
 
@@ -1454,19 +1479,25 @@ namespace SWG.Client.Network
             }
 
 
-            Message msg = _outgoingMessageQueue.Dequeue();
+            Message msg = null;
+            Message peekMessage = null;
+            if (!_outgoingMessageQueue.TryDequeue(out msg))
+            {
+                msg = null;
+            }
+            
 
-            if (_outgoingMessageQueue.Count == 0 || _outgoingMessageQueue.Peek().Size > MaxPacketSize - 21)
+            if (_outgoingMessageQueue.Count == 0 || (_outgoingMessageQueue.TryPeek(out peekMessage) && peekMessage.Size > MaxPacketSize - 21))
             {
                 packetsBuilt++;
 
                 if (msg.Routed)
                 {
-                    _BuildOutgoingReliableRoutedPackets(msg);
+                    BuildOutgoingReliableRoutedPackets(msg);
                 }
                 else
                 {
-                    _BuildOutgoingReliablePackets(msg);
+                    BuildOutgoingReliablePackets(msg);
                 }
             }
             else
@@ -1475,45 +1506,52 @@ namespace SWG.Client.Network
                 {
                     _routedMultiMessageQueue.Enqueue(msg);
 
-                    UInt16 baseSize = Convert.ToUInt16(19 + msg.Size);
+                    var baseSize = Convert.ToUInt16(19 + msg.Size);
                     packetsBuilt++;
-                    while (baseSize < MaxPacketSize && _outgoingMessageQueue.Count > 0)
+                    while (baseSize < MaxPacketSize && _outgoingMessageQueue.Count > 0 && _outgoingMessageQueue.TryPeek(out peekMessage))
                     {
-                        baseSize += Convert.ToUInt16(_outgoingMessageQueue.Peek().Size + 10);
+                        baseSize += Convert.ToUInt16(peekMessage.Size + 10);
 
                         if (baseSize > MaxPacketSize)
                         {
                             break;
                         }
 
-                        _routedMultiMessageQueue.Enqueue(_outgoingMessageQueue.Dequeue());
+                        if (_outgoingMessageQueue.TryDequeue(out msg))
+                        {
+                            _routedMultiMessageQueue.Enqueue(msg);
+                        }
                     }
 
-                    _BuildRoutedMultiDataPacket();
+                    BuildRoutedMultiDataPacket();
                 }
-                else
+                else if(msg != null)
                 {
                     _multiMessageQueue.Enqueue(msg);
 
-                    UInt16 baseSize = Convert.ToUInt16(14 + msg.Size);
+                    var baseSize = Convert.ToUInt16(14 + msg.Size);
                     packetsBuilt++;
-                    while (baseSize < MaxPacketSize && _outgoingMessageQueue.Count > 0)
+                    while (baseSize < MaxPacketSize && _outgoingMessageQueue.Count > 0 && _outgoingMessageQueue.TryPeek( out peekMessage))
                     {
-                        baseSize += Convert.ToUInt16(_outgoingMessageQueue.Peek().Size + 5);
+                        baseSize += Convert.ToUInt16(peekMessage.Size + 5);
 
                         if(baseSize >= MaxPacketSize)
                             break;
-                        _multiMessageQueue.Enqueue(_outgoingMessageQueue.Dequeue());
+                        if (_outgoingMessageQueue.TryDequeue(out msg))
+                        {
+                            _multiMessageQueue.Enqueue(msg);
+                        }
+                        
                     }
 
-                    _BuildMultiDataPacket();
+                    BuildMultiDataPacket();
                 }
             }
 
             return packetsBuilt;
         }
 
-        public UInt32 _BuildUreliablePackets()
+        public UInt32 BuildUreliablePackets()
         {
             UInt32 packetsBuilt = 0;
             Message message = null;
@@ -1522,17 +1560,17 @@ namespace SWG.Client.Network
                 return 0;
             }
             Message frontMessage = null;
-            bool front = _unreliableMessageQueue.TryPeek(out frontMessage);
+            var front = _unreliableMessageQueue.TryPeek(out frontMessage);
 
             if (!front || message.Routed || message.Size > 252 || frontMessage.Size > 252
                 || message.Size + frontMessage.Size > MaxUreliablePacketSize - 16)
             {
                 packetsBuilt++;
-                _BuildOutoingUnreliablePakets(message);
+                BuildOutoingUnreliablePakets(message);
             }
             else
             {
-                UInt16 baseSize = Convert.ToUInt16(12 + message.Size);
+                var baseSize = Convert.ToUInt16(12 + message.Size);
                 _unreliableMultiMessageQueue.Enqueue(message);
                 packetsBuilt++;
                 while (baseSize < MaxUreliablePacketSize && _unreliableMessageQueue.TryPeek(out frontMessage))
@@ -1547,22 +1585,21 @@ namespace SWG.Client.Network
                     _unreliableMultiMessageQueue.Enqueue(message);
                 }
 
-                _BuildUnreliableMultiDataPacket();
+                BuildUnreliableMultiDataPacket();
             }
             return packetsBuilt;
         }
 
 
-        private void _BuildUnreliableMultiDataPacket()
+        private void BuildUnreliableMultiDataPacket()
         {
-            Packet packet = new Packet();
-            Message message = null;
+            var packet = new Packet();
 
             packet.AddData(Convert.ToUInt16(SessionOp.MultiPacket));
 
             while (_unreliableMultiMessageQueue.Count != 0)
             {
-                message = _unreliableMultiMessageQueue.Dequeue();
+                var message = _unreliableMultiMessageQueue.Dequeue();
                 packet.AddData(Convert.ToUInt16(message.Size + 2));
                 packet.AddData(message.Priority);
                 packet.AddData((byte)0);
@@ -1572,13 +1609,13 @@ namespace SWG.Client.Network
             packet.Compressed = true;
             packet.Encrypted = true;
 
-            _AddOutgoingUnreliablePacket(packet, true);
+            AddOutgoingUnreliablePacket(packet, true);
         }
 
 
-        private void _BuildMultiDataPacket()
+        private void BuildMultiDataPacket()
         {
-            Packet packet = new Packet();
+            var packet = new Packet();
             Message message = null;
 
             packet.AddData((UInt16)SessionOp.DataChannel1);
@@ -1613,7 +1650,7 @@ namespace SWG.Client.Network
 
             if (_outSequenceNext == UInt16.MaxValue)
             {
-                _HandleOutSequenceRollover();
+                HandleOutSequenceRollover();
             }
             else
             {
@@ -1623,9 +1660,9 @@ namespace SWG.Client.Network
         }
 
 
-        private void _BuildRoutedMultiDataPacket()
+        private void BuildRoutedMultiDataPacket()
         {
-            Packet packet = new Packet();
+            var packet = new Packet();
             Message message = null;
 
             packet.AddData(Convert.ToUInt16(SessionOp.DataChannel2));
@@ -1661,7 +1698,7 @@ namespace SWG.Client.Network
 
             if (_outSequenceNext == UInt16.MaxValue)
             {
-                _HandleOutSequenceRollover();
+                HandleOutSequenceRollover();
             }
             else
             {
@@ -1670,7 +1707,7 @@ namespace SWG.Client.Network
         }
 
 
-        protected void _HandleOutSequenceRollover()
+        protected void HandleOutSequenceRollover()
         {
             _outSequenceRollover = true;
 

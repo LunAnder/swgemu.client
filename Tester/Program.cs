@@ -13,18 +13,19 @@ using SWG.Client.Network.Objects;
 using SWG.Client.Utils;
 using Wxv.Swg.Common.Files;
 using System.IO;
+using LogAbstraction.Nlog;
 using SWG.Client.Object.Templates;
 using SWG.Client.Object.Templates.Shared;
 using SWG.Client.Object.Templates.Shared.Tangible;
 
 namespace Tester
 {
-    class Program
+    internal class Program
     {
         private static readonly LogAbstraction.ILogger _logger =
             LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             /*using(var fileStream = File.OpenRead(@"E:\workspace\tre\patch_05.tre"))
              {
@@ -68,29 +69,42 @@ namespace Tester
             //var addrToConnect = "swgemutest";
             //var connectToServerName = "swgemutest";
 
-            var connector = new SessionLogin();
-            connector.Server = "login.swgemu.com";
-            connector.Password = "SWGEmu_889656";
-            connector.Username = "crazyguymrkii";
+            LogAbstraction.LogManagerFacad.ManagerImplementaiton = new NlogLogManagerImplementaion();
 
+            var graph = new ObjectGraph { ConnectTimeout = TimeSpan.FromMilliseconds(30000) };
+            graph.ResolveMessageFactories();
+            graph.ResolveFallbackMessageFactory();
+            graph.RegisterMessagesInFacories();
+            graph.RegisterMessagesInFallbackFactory();
+
+            var connector = new SessionLogin
+            {
+                Server = "login.swgemu.com",
+                Password = "SWGEmu_889656",
+                Username = "crazyguymrkii"
+            };
+
+            Console.WriteLine("Connecting to login server");
             connector.ConnectToLoginServer();
+            Console.WriteLine("Logging in to login server");
             connector.LoginToServer();
 
             var serverToConnect = connector.AvailableServers.First(cur => cur.Name == "Basilisk");
+            Console.WriteLine("Establishing connecting to game server: {0}:{1}", serverToConnect.ServerIP, serverToConnect.ServerPort);
 
-            var graph = new ObjectGraph();
-            graph.ConnectTimeout = TimeSpan.FromMilliseconds(30000);
+
             graph.EstablishConnection(connector.UserId, connector.SessionKey, IPAddress.Parse(serverToConnect.ServerIP),
                 serverToConnect.ServerPort);
-
+            Console.WriteLine("Logging in character");
             graph.LoginCharacter(serverToConnect.Characters.First(cur => cur.Name == "CrazedZealot").CharacterID);
-
+            Console.WriteLine("Press enter to exit");
             Console.ReadLine();
 
             
-            }
+
 
         }
-        
+
     }
+
 }

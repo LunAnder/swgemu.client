@@ -31,7 +31,7 @@ namespace SWG.Client.Utils
     }
 
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
-    public sealed class ImmutableAttribute : Attribute
+    public sealed class ImmutableAttribute : System.Attribute
     {
     }
 

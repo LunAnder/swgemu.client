@@ -16,5 +16,10 @@ namespace LogAbstraction
         {
             return ManagerImplementaiton.GetCurrentClassLogger();
         }
+
+        public static ILogger GetLogger(string loggerName)
+        {
+            return ManagerImplementaiton.GetLogger(loggerName);
+        }
     }
 }

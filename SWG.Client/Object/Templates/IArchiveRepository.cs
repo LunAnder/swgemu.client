@@ -10,7 +10,7 @@ namespace SWG.Client.Object.Templates
     {
         void LoadArchives(string directory = null, IEnumerable<string> filesToLoad = null);
         IFFFile LoadIff(string path);
-
+        CSTBFile LoadCrCMap(string path);
         StringFile LoadStf(string path);
     }
 }

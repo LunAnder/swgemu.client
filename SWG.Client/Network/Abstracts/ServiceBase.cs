@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
-
+using LogAbstraction;
 
 
 namespace SWG.Client.Network.Abstracts
@@ -23,6 +23,7 @@ namespace SWG.Client.Network.Abstracts
 
     public abstract class ServiceBase
     {
+        private static ILogger _logger = LogManagerFacad.GetCurrentClassLogger();
 
         public ServiceState ServiceStatus { get; protected set; }
 
@@ -63,7 +64,7 @@ namespace SWG.Client.Network.Abstracts
         }
 
 
-        public virtual void Start()
+        public virtual EventWaitHandle Start()
         {
             if (ServiceStatus == ServiceState.Stopped)
             {
@@ -72,15 +73,27 @@ namespace SWG.Client.Network.Abstracts
                     Name = ServiceThreadName
                 };
                 ServiceStatus = ServiceState.Starting;
-                ServiceThread.Start(null);
+                EventWaitHandle wait = new ManualResetEvent(false);
+
+                ServiceThread.Start(wait);
+
+                return wait;
             }
+
+            return new ManualResetEvent(true);
         }
 
 
         protected void InternalRun(object sync)
         {
+            _logger.Debug("Service {0} started", ServiceThreadName);
             ServiceStatus = ServiceState.Running;
-            Console.WriteLine("Service {0} started", ServiceThreadName);
+
+            var waitHandle = sync as EventWaitHandle;
+            if (waitHandle != null)
+            {
+                waitHandle.Set();
+            }
 
             while (_Run)
             {

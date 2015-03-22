@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Utils;
 
 

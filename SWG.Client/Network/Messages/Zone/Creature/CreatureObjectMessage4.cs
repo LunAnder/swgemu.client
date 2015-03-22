@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Network.Objects.Zone.Creature;
 using SWG.Client.Utils;
 

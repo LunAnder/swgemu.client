@@ -1,7 +1,7 @@
 using System.Text;
 using SWG.Client.Utils;
 using SWG.Client.Network.Objects;
-
+using SWG.Client.Utils.Attribute;
 
 
 namespace SWG.Client.Network.Messages.Login

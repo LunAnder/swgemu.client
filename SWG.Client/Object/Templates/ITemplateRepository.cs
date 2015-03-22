@@ -9,5 +9,7 @@ namespace SWG.Client.Object.Templates
     public interface ITemplateRepository
     {
         IFFFile LoadIff(string toLoad);
+        CSTBFile LoadCrCMap(string path);
+        StringFile LoadStf(string toLoad);
     }
 }

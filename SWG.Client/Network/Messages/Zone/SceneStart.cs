@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 namespace SWG.Client.Network.Messages.Zone
 {
@@ -18,11 +19,15 @@ namespace SWG.Client.Network.Messages.Zone
         public string SharedRaceTemplate { get; set; }
         public long GalaticTime { get; set; }
 
-        public SceneStart() { }
+        public SceneStart()
+        {
+            
+        }
 
         public SceneStart(Message message, bool parseFromData = false)
             : base(message.Data, message.Size, parseFromData)
         {
+
         }
 
         public override bool ParseFromData()

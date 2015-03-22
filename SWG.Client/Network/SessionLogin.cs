@@ -8,6 +8,7 @@ using System.Security.Policy;
 using System.Text;
 using System.Threading;
 using SWG.Client.Network.Messages;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Network.Messages.Login;
 using SWG.Client.Network.Objects;
 using SWG.Client.Utils;
@@ -92,8 +93,8 @@ namespace SWG.Client.Network
             Session.Command = SessionCommand.Connect;
 
             _socket.Connect(endpoint);
-            _socketReader.Start();
-            _socketWriter.Start();
+            _socketReader.Start().WaitOne(Timeout);
+            _socketWriter.Start().WaitOne(Timeout);
 
             
             var timeout = DateTime.Now.AddMilliseconds(Timeout);

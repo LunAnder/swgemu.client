@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Network.Messages.Base;
 using SWG.Client.Utils;
 
 namespace SWG.Client.Network.Messages.Zone.Tangible

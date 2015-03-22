@@ -27,8 +27,12 @@ namespace SWG.Client.Network
         public Socket Socket { get; set; }
         public Session Session { get; set; }
 
+        public TimeSpan WaitTime { get; set; }
 
-        public SocketWriter() {}
+        public SocketWriter()
+        {
+            WaitTime = TimeSpan.FromTicks(1000);
+        }
         
         public SocketWriter(Session Session, Socket Socket, bool Start = false)
         {
@@ -43,7 +47,7 @@ namespace SWG.Client.Network
             }
         }
 
-        public override void Start()
+        public override EventWaitHandle Start()
         {
             if (Socket == null)
             {
@@ -55,9 +59,8 @@ namespace SWG.Client.Network
                 throw new ArgumentException("Session");
             }
 
-            base.Start();
+            return base.Start();
         }
-
 
         protected override void DoWork()
         {
@@ -67,18 +70,18 @@ namespace SWG.Client.Network
             
             while ((toSend = Session.GetOutgoingReliablePacket()) != null)
             {
-                _SendPacket(toSend);
+                SendPacket(toSend);
             }
 
             while ((toSend = Session.GetOutgoingUnreliablePacket()) != null)
             {
-                _SendPacket(toSend);
+                SendPacket(toSend);
             }
 
-            Thread.Sleep(1000);
+            Thread.Sleep(WaitTime);
         }
 
-        public void _SendPacket(Packet ToSend)
+        public void SendPacket(Packet ToSend)
         {
             Int32 outlen = 0;
 
