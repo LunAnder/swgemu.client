@@ -107,7 +107,7 @@ namespace SWG.Client.Network
 
                 Message transformed;
                 IMessageParseFactory factory;
-                if (!MessageFactories.TryGetValue(msg.MessageOpCode, out factory) || factory.TryParse(msg.MessageOpCode, msg, out transformed) )
+                if (!MessageFactories.TryGetValue(msg.MessageOpCode, out factory) || !factory.TryParse(msg.MessageOpCode, msg, out transformed) )
                 {
                     if (!FallbackFactory.TryParse(msg.MessageOpCode, msg, out transformed))
                     {

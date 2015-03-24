@@ -1240,7 +1240,7 @@ namespace SWG.Client.Network
 
             localTime = DateTime.UtcNow.GetMilliseconds();
 
-            foreach (var windowPacket in _windowPacketList)
+            foreach (var windowPacket in _windowPacketList.ToArray())
             {
                 if (windowPacket.TimeSent == 0)
                 {

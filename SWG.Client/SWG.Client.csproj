@@ -72,7 +72,14 @@
     <Compile Include="Network\Messages\MessageFactories\DefaultMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\DeltaMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\MessageFactoryWithSecondaryOpCodeBase.cs" />
+    <Compile Include="Network\Messages\MessageFactories\ObjectControllerMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\OpcodeWithSecodndaryKey.cs" />
+    <Compile Include="Network\Messages\OpcodeKey.cs" />
+    <Compile Include="Network\Messages\Zone\Object\PlayClientEffectObjectMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\SceneEndBaselines.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\UpdateContainmentMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\UpdateTransformMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\UpdateTransformWithParentMessage.cs" />
     <Compile Include="Utils\AssemblyTypesEnumerator.cs" />
     <Compile Include="Utils\Attribute\HandledByFactoryAttribute.cs" />
     <Compile Include="Utils\Attribute\MessageFactoryAtribute.cs" />

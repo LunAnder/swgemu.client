@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SWG.Client.Utils;
+using SWG.Client.Utils.Attribute;
 
 namespace SWG.Client.Network.Messages.MessageFactories
 {
@@ -21,7 +22,7 @@ namespace SWG.Client.Network.Messages.MessageFactories
         {
             var registered = false;
 
-            foreach (var registerAttr in typeof(T).GetCustomAttributes(typeof(RegisterBaselineMessageAttribute), false).Cast<RegisterBaselineMessageAttribute>())
+            foreach (var registerAttr in typeof(T).GetCustomAttributes(typeof(RegisterMessageWithSecondaryAttribute), false).Cast<RegisterMessageWithSecondaryAttribute>())
             {
                 registered = true;
                 RegisterMessageObject<T>(registerAttr.OpCode, registerAttr.Secondary.Value);

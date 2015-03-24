@@ -7,7 +7,7 @@ using SWG.Client.Utils.Attribute;
 namespace SWG.Client.Network.Messages.MessageFactories
 {
     [FallbackMessageFactory]
-    public class DefaultMessageFactory : BaseMessageFactory<uint>
+    public class DefaultMessageFactory : BaseMessageFactory<OpcodeKey>
     {
         private static readonly ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
 
@@ -38,7 +38,7 @@ namespace SWG.Client.Network.Messages.MessageFactories
             return RegisterMessageObject(opcode, (msg) => Message.Create<T>(msg));
         }
 
-        protected override uint GetKey(uint messageOp, Message baseMessage)
+        protected override OpcodeKey GetKey(uint messageOp, Message baseMessage)
         {
             return messageOp;
         }
