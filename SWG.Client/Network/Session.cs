@@ -1242,7 +1242,7 @@ namespace SWG.Client.Network
 
             foreach (var windowPacket in _windowPacketList.ToArray())
             {
-                if (windowPacket.TimeSent == 0)
+                if (windowPacket == null ||  windowPacket.TimeSent == 0)
                 {
                     break;
                 }

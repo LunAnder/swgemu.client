@@ -14,7 +14,7 @@ namespace SWG.Client.Network.Messages.MessageFactories
         public readonly ConcurrentDictionary<TKey, Func<Message, Message>> RegisteredObjects =
             new ConcurrentDictionary<TKey, Func<Message, Message>>();
 
-        public bool TryParse(uint messageOp, Message baseMessage, out Message parsedMessage)
+        public virtual bool TryParse(uint messageOp, Message baseMessage, out Message parsedMessage)
         {
             Func<Message, Message> msgParser = null;
             var key = GetKey(messageOp, baseMessage);
