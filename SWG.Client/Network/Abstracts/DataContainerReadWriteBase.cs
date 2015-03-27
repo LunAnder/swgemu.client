@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using SWG.Client.Network.Abstracts;
 using SWG.Client.Utils;
 
 namespace SWG.Client.Network
@@ -185,7 +186,11 @@ namespace SWG.Client.Network
             return stringData;
         }
 
-        
+        public IDisposable TemporaryRead()
+        {
+            return new TemporaryReadDisposeable(this);
+        }
+
 
         public void AddData(byte[] Source, int SourceIndex = 0, int Length = 0)
         {
@@ -339,5 +344,6 @@ namespace SWG.Client.Network
             Data.AddNetworkData(ToAdd, ref _writeIndex);
             //AddNetworkData(BitConverter.GetBytes(ToAdd));
         }*/
+
     }
 }

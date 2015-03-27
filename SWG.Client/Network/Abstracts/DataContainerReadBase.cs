@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using SWG.Client.Network.Abstracts;
 using SWG.Client.Utils;
 
 namespace SWG.Client.Network
@@ -131,6 +132,11 @@ namespace SWG.Client.Network
             var stringData = TextEncoding.GetString(Data, ReadIndex, length);
             ReadIndex += length * charMultiplier;
             return stringData;
+        }
+
+        public IDisposable TemporaryRead()
+        {
+            return new TemporaryReadDisposeable(this);
         }
     }
 }

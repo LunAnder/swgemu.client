@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Policy;
 using System.Text;
 
 
@@ -30,5 +31,8 @@ namespace SWG.Client.Network
         uint ReadUInt32();
         ulong ReadUInt64();
         string ReadString(Encoding Encoding);
+
+        IDisposable TemporaryRead();
+
     }
 }
