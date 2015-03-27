@@ -79,10 +79,15 @@
     <Compile Include="Network\Messages\MessageFactories\Keys\OpcodeKey.cs" />
     <Compile Include="Network\Messages\Zone\Object\AnimationMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\CombatActionMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Object\DataTransformMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\DataTransformWithParentMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Object\EmoteMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Object\FlourishMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\ObjectControllerMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\PlayClientEffectObjectMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\PostureMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Object\ShowFlyTextMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Object\SpatialChatMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\WeaponRangesMessage.cs" />
     <Compile Include="Network\Messages\Zone\Scene\SceneEndBaselines.cs" />
     <Compile Include="Network\Messages\Zone\Scene\UpdateContainmentMessage.cs" />
