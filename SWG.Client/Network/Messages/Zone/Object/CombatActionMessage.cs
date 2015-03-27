@@ -8,7 +8,7 @@ using SWG.Client.Utils.Attribute;
 
 namespace SWG.Client.Network.Messages.Zone.Object
 {
-    [ObjectControllerMessage(0x131)]
+    [ObjectControllerMessage(0xCC)]
     public class CombatActionMessage : ObjectControllerMessage
     {
         public int ActionCrc { get; set; }
