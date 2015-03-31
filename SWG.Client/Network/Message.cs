@@ -16,6 +16,9 @@ namespace SWG.Client.Network
         public bool Routed { get; set; }
         public byte Priority { get; set; }
 
+        public SessionOp? SourcePacketType { get; set; }
+
+        //public List<Packet> SourcePackets = new List<Packet>(); 
 
         public UInt16 OpcodeCount
         {

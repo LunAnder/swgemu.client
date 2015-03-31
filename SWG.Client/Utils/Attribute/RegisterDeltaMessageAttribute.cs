@@ -17,10 +17,15 @@ namespace SWG.Client.Utils.Attribute
 
         }
 
-        public RegisterDeltaMessageAttribute(MessageOp opcode, uint secondary)
+        public RegisterDeltaMessageAttribute(uint opcode, uint secondary)
             : base(opcode, secondary)
         {
             FactoryHandlerOpCodeEnum = MessageOp.DeltasMessage;
+        }
+
+        public RegisterDeltaMessageAttribute(MessageOp opcode, uint secondary)
+            : this((uint)opcode, secondary)
+        {
         }
 
         public RegisterDeltaMessageAttribute()

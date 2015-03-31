@@ -69,6 +69,7 @@ namespace Tester
             //var addrToConnect = "swgemutest";
             //var connectToServerName = "swgemutest";
 
+
             LogAbstraction.LogManagerFacad.ManagerImplementaiton = new NlogLogManagerImplementaion();
 
             var graph = new ObjectGraph { ConnectTimeout = TimeSpan.FromMilliseconds(30000) };
@@ -89,19 +90,16 @@ namespace Tester
             Console.WriteLine("Logging in to login server");
             connector.LoginToServer();
 
-            var serverToConnect = connector.AvailableServers.First(cur => cur.Name == "Basilisk");
+            var serverToConnect = connector.AvailableServers.First(cur => cur.Name.Contains("Nova"));
             Console.WriteLine("Establishing connecting to game server: {0}:{1}", serverToConnect.ServerIP, serverToConnect.ServerPort);
 
 
             graph.EstablishConnection(connector.UserId, connector.SessionKey, IPAddress.Parse(serverToConnect.ServerIP),
                 serverToConnect.ServerPort);
             Console.WriteLine("Logging in character");
-            graph.LoginCharacter(serverToConnect.Characters.First(cur => cur.Name == "CrazedZealot").CharacterID);
+            graph.LoginCharacter(serverToConnect.Characters.First().CharacterID);
             Console.WriteLine("Press enter to exit");
             Console.ReadLine();
-
-            
-
 
         }
 

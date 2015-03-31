@@ -235,7 +235,7 @@ namespace SWG.Client.Network
             {
                 Command = SessionCommand.Disconnect;
             }
-            else if (diff > 10000)
+            else if (diff > 25000)
             {
                 SendPingPacket();
             }
@@ -433,6 +433,7 @@ namespace SWG.Client.Network
                 {
                         Priority = priority,
                         FastPath = true,
+                        SourcePacketType = packet.PacetTypeEnum,
                 };
 
             AddIncomingMessage(msg, priority);
@@ -835,7 +836,8 @@ namespace SWG.Client.Network
                     var msg = new Message(packet.Data, packet.ReadIndex, size - 7)
                         {
                                 Priority = priority,
-                                Routed = true
+                                Routed = true,
+                                SourcePacketType = packet.PacetTypeEnum,
                         };
 
                     AddIncomingMessage(msg, priority);
@@ -853,6 +855,7 @@ namespace SWG.Client.Network
                     {
                             Priority = priority,
                             Routed = true,
+                            SourcePacketType = packet.PacetTypeEnum,
                     };
                 AddIncomingMessage(msg, priority);
             }
@@ -865,52 +868,7 @@ namespace SWG.Client.Network
 
         protected void ProcessDataChannelPacket(Packet packet, bool b)
         {
-            /*byte priority = 0;
-            byte routed = 0;
-            byte dest = 0;
-            UInt32 accountId = 0;
 
-            packet.ReadIndex = 0;
-
-            UInt16 pcaketType = packet.ReadUInt16();
-            UInt16 sequence = packet.ReadNetworkUInt16();
-
-            priority = packet.ReadByte();
-            routed = packet.ReadByte();
-
-            if (routed == 0x01)
-            {
-                dest = packet.ReadByte();
-                accountId = packet.ReadUInt32();
-            }
-
-            if (routed == 0x19)
-            {
-                UInt32 size = packet.ReadByte();
-                do
-                {
-                    if (size == 0xff)
-                    {
-                        size = packet.ReadNetworkUInt16();
-                    }
-
-                    priority = packet.ReadByte();
-                    packet.ReadByte();
-
-                    Message msg = new Message(packet.Data, packet.ReadIndex, Convert.ToInt32(size) - 2)
-                        {
-                                Priority = priority,
-                        };
-                    AddIncomingMessage(msg, priority);
-                    packet.ReadIndex += Convert.ToInt32(size) - 2;
-                    size = Convert.ToUInt32(packet.ReadByte());
-                }
-                while (packet.ReadIndex < packet.Size && size != 0);
-            }
-            else
-            {
-
-            }*/
 
             packet.ReadIndex = 4;
 
@@ -929,7 +887,12 @@ namespace SWG.Client.Network
 
                 do
                 {
-                    var subMessage = new Message(packet.Data, packet.ReadIndex, subPacketSize);
+                    var subMessage = new Message(packet.Data, packet.ReadIndex, subPacketSize)
+                    {
+                        SourcePacketType = packet.PacetTypeEnum
+                    };
+
+                    //subMessage.SourcePackets.Add(packet);
                     AddIncomingMessage(subMessage, 0);
                     packet.ReadIndex += subPacketSize;
                     subPacketSize = packet.ReadByte();
@@ -944,7 +907,8 @@ namespace SWG.Client.Network
             }
             else
             {
-                AddIncomingMessage(new Message(packet.Data, 4, packet.Size - 4), 0);
+                AddIncomingMessage(
+                    new Message(packet.Data, 4, packet.Size - 4) {SourcePacketType = packet.PacetTypeEnum}, 0);
             }
             
             _inSequenceNext++;
@@ -1071,7 +1035,7 @@ namespace SWG.Client.Network
 
                 packet.ReadIndex = 8;
 
-                priority = packet.ReadByte();
+                //priority = packet.ReadByte();
 
                 _incomingFragmentedPacketQueue.Enqueue(packet);
             }
@@ -1084,7 +1048,10 @@ namespace SWG.Client.Network
                 {
                     _incomingFragmentedPacketQueue.Enqueue(packet);
 
-                    var msg = new Message(_fragmentedPacketTotalSize);
+                    var msg = new Message(_fragmentedPacketTotalSize)
+                    {
+                        SourcePacketType = packet.PacetTypeEnum,
+                    };
                     Packet fragment = null;
 
                     var first = true;
@@ -1095,20 +1062,7 @@ namespace SWG.Client.Network
                         if (first)
                         {
                             first = false;
-                            fragment.ReadIndex = 8;
-                            priority = fragment.ReadByte();
-                            routed = fragment.ReadByte();
-
-                            if (routed != 0)
-                            {
-                                dest = fragment.ReadByte();
-                                accountId = fragment.ReadUInt32();
-                                msg.AddData(fragment.Data, 15);
-                            }
-                            else
-                            {
-                                msg.AddData(fragment.Data, 10, fragment.Size -8);
-                            }
+                            msg.AddData(fragment.Data, 8, fragment.Size - 8);
                         }
                         else
                         {

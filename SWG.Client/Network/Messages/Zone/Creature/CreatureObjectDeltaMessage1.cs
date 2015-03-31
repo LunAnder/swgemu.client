@@ -26,7 +26,9 @@ namespace SWG.Client.Network.Messages.Zone.Creature
         public override bool ParseFromData()
         {
             if (!base.ParseFromData())
+            {
                 return false;
+            }
             for (int i = 0; i < UpdateCount; i++)
             {
                 var updateId = ReadInt16();

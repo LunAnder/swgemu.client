@@ -42,7 +42,11 @@ namespace SWG.Client.Network.Messages.Zone.Player
 
             PlayerExperience = ReadList<Experience>(true, true);
 
-            Waypoints = ReadList<Waypoint>(true, true);
+            Waypoints = ReadList(() =>
+            {
+                SetReadLongForwardBy(1); //skip the waypoint list key (same as the guid for the waypoint).
+                return new Waypoint().Deserialize(this);
+            }, true, true);
 
             CurrentForcePower = ReadInt32();
             MaxForcePower = ReadInt32();

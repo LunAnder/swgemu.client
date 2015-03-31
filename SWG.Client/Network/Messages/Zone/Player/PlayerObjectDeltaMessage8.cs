@@ -33,7 +33,9 @@ namespace SWG.Client.Network.Messages.Zone.Player
         public override bool ParseFromData()
         {
             if (!base.ParseFromData())
+            {
                 return false;
+            }
 
             for (int i = 0; i < UpdateCount; i++)
             {

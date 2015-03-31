@@ -134,12 +134,13 @@ namespace SWG.Client.Network.Messages
                 var change = new ListChange<T>();
                 switch (changeType)
                 {
+
                     case 0x00:
-                        change.Operation = ListChangeOperation.Remove;
+                        change.Operation = ListChangeOperation.Add;
                         change.Value = ReadChange();
                         break;
                     case 0x01:
-                        change.Operation = ListChangeOperation.Add;
+                        change.Operation = ListChangeOperation.Remove;
                         change.Value = ReadChange();
                         break;
                     case 0x03:

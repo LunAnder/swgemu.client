@@ -62,7 +62,7 @@ namespace SWG.Client.Network
 
             if (string.IsNullOrEmpty(Server))
             {
-                throw new ArgumentException("Server");
+                throw new ArgumentException("OwnerServer");
             }
 
             if (Session == null)

@@ -19,6 +19,7 @@ namespace SWG.Client.Network.Objects.Zone.Object
             DefenderEndPosture = DataContainer.ReadByte();
             HitType = DataContainer.ReadByte();
             DefenderCombatSpecialMoveEffect = DataContainer.ReadByte();
+            return this;
         }
     }
 }

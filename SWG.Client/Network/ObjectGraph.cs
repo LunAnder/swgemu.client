@@ -45,6 +45,7 @@ namespace SWG.Client.Network
         //private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
         private static readonly LogAbstraction.ILogger _logger = LogAbstraction.LogManagerFacad.GetCurrentClassLogger();
         private static readonly LogAbstraction.ILogger _creatObjlogger = LogAbstraction.LogManagerFacad.GetLogger("ObjectCreateLogger");
+        private static readonly LogAbstraction.ILogger _msgLogger = LogAbstraction.LogManagerFacad.GetLogger("MsgLogger");
         //private  Dictionary<long,Message> messages = new Dictionary<long, Message>();
         public List<Message> Messages = new List<Message>(); 
 
@@ -111,6 +112,13 @@ namespace SWG.Client.Network
                 {
                     if (!FallbackFactory.TryParse(msg.MessageOpCode, msg, out transformed))
                     {
+                        long tmpVal;
+                        if (long.TryParse(msg.MessageOpCodeEnum.ToString(), out tmpVal))
+                        {
+                             _msgLogger.Trace(BitConverter.ToString(msg.Data).Replace("-", ""));
+                             _msgLogger.Trace("{0}", msg.OpcodeCount);
+                             _msgLogger.Trace("{0}", msg.SourcePacketType);
+                        }
                         continue;
                     }    
                 }

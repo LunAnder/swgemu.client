@@ -136,6 +136,7 @@ namespace SWG.Client.Network
         NotifyChatRemoveIgnore = 0xbb8f85f4u,
 
         GRUP = 0x47525550u,
+        GILD = 0x47494C44u,
         CREO = 0x4352454Fu,
         PLAY = 0x504c4159u,
         TANO = 0x54414e4fu,
@@ -148,12 +149,11 @@ namespace SWG.Client.Network
         RCNO = 0x52434e4fu,
         MSCO = 0x4d53434fu,
         MISO = 0x4d49534fu,
-        ITNO = 0x49544e4fu,
+        ITNO = 0x4F4E5449,
         SecureTrade = 0x00000115u,
         STAO = 0x5354414Fu,
 
         WeaponObjectMessage = 0x5745414Fu,
-
         //ImageDesigner
         StatMigrationStart = 0xefac38c4u,
 
@@ -199,7 +199,7 @@ namespace SWG.Client.Network
         GetCommoditiesTypeList = 0x48F493C5u,
         CommoditiesTypeListResponse = 0xD4E937FCu,
 
-        //inter Server Kommunikation
+        //inter OwnerServer Kommunikation
         BidAuctionAcceptedMessage = 0x8737A639u,
         SendSystemMailMessage = 0x7B08578Eu,
 

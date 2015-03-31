@@ -7,7 +7,7 @@ using SWG.Client.Utils.Attribute;
 
 namespace SWG.Client.Network.Messages.Zone.Intangible
 {
-    [RegisterDeltaMessage(MessageOp.ITNO,0x03)]
+    [RegisterDeltaMessage(0x4F4E5449, 0x03u)]
     public class IntangibleObjectDeltaMessage3 : DeltaMessage
     {
 
@@ -16,7 +16,8 @@ namespace SWG.Client.Network.Messages.Zone.Intangible
         public string STFName { get; set; }
         public string CustomName { get; set; }
         public int? Volume { get; set; }
-        public int? GenericInt { get; set; }
+        public int? Status { get; set; }
+        public int? ConditionDamage { get; set; }
 
         public IntangibleObjectDeltaMessage3() { }
 
@@ -57,7 +58,10 @@ namespace SWG.Client.Network.Messages.Zone.Intangible
                             Volume = ReadInt32();
                             break;
                         case 0x04:
-                            GenericInt = ReadInt32();
+                            Status = ReadInt32();
+                            break;
+                        case 0x0A:
+                            ConditionDamage = ReadInt32();
                             break;
                     }
                 }

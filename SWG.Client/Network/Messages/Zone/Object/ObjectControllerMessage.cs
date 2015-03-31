@@ -41,11 +41,11 @@ namespace SWG.Client.Network.Messages.Zone.Object
         }
 
 
-        protected List<T> ReadList<T>(Func<int> readSizeFunc)
+        protected T[] ReadList<T>(Func<int> readSizeFunc)
             where T : IDeserializableFromMessage<T>, new()
         {
             var size = readSizeFunc();
-            var toReturn = new List<T>(size);
+            var toReturn = new T[size];
             for (int i = 0; i < size; i++)
             {
                 toReturn[i] = (new T()).Deserialize(this);

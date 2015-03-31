@@ -44,8 +44,7 @@ namespace SWG.Client.Network.Messages.Zone.Creature
             AccelerationMultiplierMod = ReadFloat();
 
             HAMEncumberance = ReadList(ReadInt32);
-
-            SkillModifiers = ReadList<SkillModifier>();
+            SkillModifiers = ReadList<SkillModifier>(true, true);
 
             SpeedMultiplierBase = ReadFloat();
             SpeedMultiplierMod = ReadFloat();
@@ -56,7 +55,7 @@ namespace SWG.Client.Network.Messages.Zone.Creature
             WalkSpeed = ReadFloat();
             WaterModPercent = ReadFloat();
 
-            GroupMissionCriticalObjects = ReadList<GroupMissionCriticalObject>();
+            //GroupMissionCriticalObjects = ReadList<GroupMissionCriticalObject>();
 
             return true;
         }

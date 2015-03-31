@@ -18,7 +18,7 @@ namespace SWG.Client.Network.Messages.Zone.Object
         public byte TrailsBitFlag { get; set; }
         public byte AttackerCombatSpecialMoveEffect { get; set; }
 
-        public List<Defender> Defenders; 
+        public Defender[] Defenders; 
 
         public CombatActionMessage()
         {

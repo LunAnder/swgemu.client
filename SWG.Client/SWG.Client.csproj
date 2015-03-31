@@ -68,6 +68,11 @@
     <Compile Include="Network\IHasFallbackMessageFactoryExtension.cs" />
     <Compile Include="Network\IHasMessageFactories.cs" />
     <Compile Include="Network\IHasMessageFactoriesExtension.cs" />
+    <Compile Include="Network\Messages\Chat\ChatOnEnteredRoomMessage.cs" />
+    <Compile Include="Network\Messages\Chat\ChatOnSendRoomMessage.cs" />
+    <Compile Include="Network\Messages\Chat\ChatPersistentMessageToClient.cs" />
+    <Compile Include="Network\Messages\Chat\ChatRoomListMessage.cs" />
+    <Compile Include="Network\Messages\Chat\ChatRoomMessage.cs" />
     <Compile Include="Network\Messages\MessageFactories\BaselineMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\BaseMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\DefaultMessageFactory.cs" />
@@ -77,6 +82,23 @@
     <Compile Include="Network\Messages\MessageFactories\ObjectControllerMessageFactory.cs" />
     <Compile Include="Network\Messages\MessageFactories\Keys\OpcodeWithSecodndaryKey.cs" />
     <Compile Include="Network\Messages\MessageFactories\Keys\OpcodeKey.cs" />
+    <Compile Include="Network\Messages\Zone\Factory\FactoryCrateObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Factory\FactoryCrateObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Factory\FactoryCrateObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Guild\GuildObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Guild\GuildObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Guild\GuildObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectDeltaMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectDeltaMessage7.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectMessage7.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectMessage8.cs" />
+    <Compile Include="Network\Messages\Zone\ManufactureSchematic\ManufactureSchematicObjectMessage9.cs" />
+    <Compile Include="Network\Messages\Zone\Mission\MissionObjectDeltaMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Mission\MissionObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Mission\MissionObjectMessage6.cs" />
     <Compile Include="Network\Messages\Zone\Object\AnimationMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\CombatActionMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\DataTransformMessage.cs" />
@@ -89,12 +111,22 @@
     <Compile Include="Network\Messages\Zone\Object\ShowFlyTextMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\SpatialChatMessage.cs" />
     <Compile Include="Network\Messages\Zone\Object\WeaponRangesMessage.cs" />
+    <Compile Include="Network\Messages\Zone\Resource\ResourceContainerObjectDeltaMessage3 .cs" />
+    <Compile Include="Network\Messages\Zone\Resource\ResourceContainerObjectDeltaMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Resource\ResourceContainerObjectMessage3.cs" />
+    <Compile Include="Network\Messages\Zone\Resource\ResourceContainerObjectMessage6.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\PlayClientEffectLocMessage.cs" />
     <Compile Include="Network\Messages\Zone\Scene\SceneEndBaselines.cs" />
+    <Compile Include="Network\Messages\Zone\Scene\SceneObjectDestroyMessage.cs" />
     <Compile Include="Network\Messages\Zone\Scene\UpdateContainmentMessage.cs" />
     <Compile Include="Network\Messages\Zone\Scene\UpdateTransformMessage.cs" />
     <Compile Include="Network\Messages\Zone\Scene\UpdateTransformWithParentMessage.cs" />
     <Compile Include="Network\ObjectControllerFlags.cs" />
+    <Compile Include="Network\Objects\StringFile.cs" />
     <Compile Include="Network\Objects\Zone\Object\Defender.cs" />
+    <Compile Include="Object\Chat\ChatRoom.cs" />
+    <Compile Include="Object\Chat\ChatRoomUser.cs" />
+    <Compile Include="Object\ManufactureSchematic\CraftingValues\CraftingValue.cs" />
     <Compile Include="Utils\AssemblyTypesEnumerator.cs" />
     <Compile Include="Utils\Attribute\HandledByFactoryAttribute.cs" />
     <Compile Include="Utils\Attribute\MessageFactoryAtribute.cs" />
@@ -243,7 +275,9 @@
   <ItemGroup>
     <Content Include="Ionic.Zlib.dll" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Network\Messages\Zone\Harvester\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

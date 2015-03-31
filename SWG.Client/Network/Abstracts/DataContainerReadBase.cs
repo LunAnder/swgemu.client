@@ -138,5 +138,29 @@ namespace SWG.Client.Network
         {
             return new TemporaryReadDisposeable(this);
         }
+
+        public void SetReadIntForwardBy(int count = 1)
+        {
+            ReadIndex += sizeof(int) * count;
+        }
+
+        public void SetReadLongForwardBy(int count = 1)
+        {
+            ReadIndex += sizeof(long) * count;
+        }
+        public void SetReadShortForwardBy(int count = 1)
+        {
+            ReadIndex += sizeof(short) * count;
+        }
+
+        public void SetReadFloatForwardBy(int count = 1)
+        {
+            ReadIndex += sizeof(float) * count;
+        }
+
+        public void SetReadByteForwardBy(int count = 1)
+        {
+            ReadIndex += sizeof(byte) * count;
+        }
     }
 }

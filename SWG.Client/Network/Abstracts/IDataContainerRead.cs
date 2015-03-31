@@ -32,6 +32,12 @@ namespace SWG.Client.Network
         ulong ReadUInt64();
         string ReadString(Encoding Encoding);
 
+        void SetReadIntForwardBy(int count = 1);
+        void SetReadLongForwardBy(int count = 1);
+        void SetReadShortForwardBy(int count = 1);
+        void SetReadFloatForwardBy(int count = 1);
+        void SetReadByteForwardBy(int count = 1);
+
         IDisposable TemporaryRead();
 
     }

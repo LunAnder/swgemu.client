@@ -27,14 +27,14 @@ namespace SWG.Client.Network.Objects.Zone.Player
         {
             return new Waypoint
                 {
-                        ObjectId = DataContainer.ReadInt64(),
+                        //ObjectId = DataContainer.ReadInt64(),
                         CellId = DataContainer.ReadInt32(),
                         XCoord = DataContainer.ReadFloat(),
                         ZCoord = DataContainer.ReadFloat(),
                         YCoord = DataContainer.ReadFloat(),
                         LocationNetworkId = DataContainer.ReadInt64(),
                         PlanetCRC = DataContainer.ReadInt32(),
-                        WaypointName = DataContainer.ReadString(Encoding.UTF8),
+                        WaypointName = DataContainer.ReadString(Encoding.Unicode),
                         WaypointObjectId = DataContainer.ReadInt64(),
                         Colour = DataContainer.ReadByte(),
                         Active = DataContainer.ReadByte(),

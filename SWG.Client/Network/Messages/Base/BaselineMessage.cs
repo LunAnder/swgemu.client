@@ -50,11 +50,10 @@ namespace SWG.Client.Network.Messages.Base
         public virtual T[] ReadList<T>(Func<T> CreateObjectFunc, bool HasUpdateCounter = true, bool ReadUpdateType = false)
         {
             var size = ReadInt32();
-            var updateCount = -1;
             //update counter, not useful here
             if (HasUpdateCounter)
             {
-                updateCount = ReadInt32();
+                SetReadIntForwardBy(1);
             }
 
             var arr = new T[size];
@@ -63,7 +62,7 @@ namespace SWG.Client.Network.Messages.Base
             {
                 if (ReadUpdateType)
                 {
-                    ReadByte();
+                    SetReadByteForwardBy(1);
                 }
 
                 arr[i] = CreateObjectFunc();
